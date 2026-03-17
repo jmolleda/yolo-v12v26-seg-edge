@@ -54,6 +54,7 @@ train_params = {
 }
 
 train_params.update(params_compartidos)
+train_params["lr0"] = 0.0005
 
 versionYOLO = "versionesYolo/yolo26-seg-L.yaml"
 
