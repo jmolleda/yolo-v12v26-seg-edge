@@ -140,8 +140,10 @@ def save_report(filepath, report_data):
         f.write("-" * 50 + "\n")
 
         f.write("--- Accuracy ---\n")
-        f.write(f"mAP50:    {report_data.get('map50', 0.0):.4f}\n")
-        f.write(f"mAP50-95: {report_data.get('map50_95', 0.0):.4f}\n")
+        f.write(f"mAP50:     {report_data.get('map50', 0.0):.4f}\n")
+        f.write(f"mAP50-95:  {report_data.get('map50_95', 0.0):.4f}\n")
+        f.write(f"Precision: {report_data.get('precision', 0.0):.4f}\n")
+        f.write(f"Recall:    {report_data.get('recall', 0.0):.4f}\n")
         f.write("-" * 50 + "\n")
 
         if report_data.get("watts") is not None:

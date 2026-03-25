@@ -104,6 +104,7 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
     print(f"\nMeasuring: {MEASURE_RUNS} runs...")
     all_pre, all_inf, all_post = [], [], []
     map50_values, map50_95_values = [], []
+    precision_values, recall_values = [], []
 
     # Measure power during inference (Jetsons only)
     watts = measure_power_jetson() if device_name.startswith("jetson") else None
@@ -118,6 +119,8 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
         if hasattr(val_results, "box"):
             map50_values.append(float(val_results.box.map50))
             map50_95_values.append(float(val_results.box.map))
+            precision_values.append(float(val_results.box.mp))
+            recall_values.append(float(val_results.box.mr))
 
         print(f"  Run {i + 1}/{MEASURE_RUNS}: "
               f"inf={speed.get('inference', 0.0):.2f}ms")
@@ -131,6 +134,8 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
 
     map50 = statistics.mean(map50_values) if map50_values else 0.0
     map50_95 = statistics.mean(map50_95_values) if map50_95_values else 0.0
+    precision = statistics.mean(precision_values) if precision_values else 0.0
+    recall = statistics.mean(recall_values) if recall_values else 0.0
 
     fps_per_watt = fps / watts if watts and watts > 0 else None
 
@@ -169,6 +174,8 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
         "fps": fps,
         "map50": map50,
         "map50_95": map50_95,
+        "precision": precision,
+        "recall": recall,
         "watts": watts,
         "fps_per_watt": fps_per_watt,
     }
@@ -184,6 +191,8 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
     print(f"  FPS:         {fps:.2f}")
     print(f"  mAP50:       {map50:.4f}")
     print(f"  mAP50-95:    {map50_95:.4f}")
+    print(f"  Precision:   {precision:.4f}")
+    print(f"  Recall:      {recall:.4f}")
     if watts:
         print(f"  Power:       {watts:.2f} W")
         print(f"  FPS/Watt:    {fps_per_watt:.2f}")
