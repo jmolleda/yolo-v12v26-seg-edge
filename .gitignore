@@ -1,2 +1,5 @@
 data/
 run_rtx5090/
+results/
+logs/
+.old/

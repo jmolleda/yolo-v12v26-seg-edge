@@ -1,0 +1,238 @@
+"""Generic inference benchmark script.
+
+Runs validation with warm-up and multiple measurement passes for stable timing.
+
+Usage:
+    python scripts/infer.py --weights best.pt --format pytorch --imgsz 640 --batch 1 \
+        --arch yolo26 --size nano --task segment --approach scratch \
+        --experiment core_comparison --device rtx5090
+
+    python scripts/infer.py --weights best.engine --format tensorrt --precision fp16 \
+        --imgsz 640 --batch 1 --arch yolo26 --size nano --task segment \
+        --approach scratch --experiment core_comparison --device jetson_agx
+"""
+
+import argparse
+import datetime
+import os
+import sys
+import statistics
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from ultralytics import YOLO
+from scripts.utils import (
+    get_data_yaml_path,
+    get_results_dir,
+    get_machine_name,
+    save_report,
+    format_duration,
+)
+
+# Warm-up and measurement config
+WARMUP_RUNS = 5
+MEASURE_RUNS = 10
+
+
+def measure_power_jetson():
+    """Measure current power consumption on Jetson via jtop.
+
+    Returns:
+        Power in watts, or None if not on a Jetson / jtop unavailable.
+    """
+    try:
+        from jtop import jtop
+        with jtop() as jetson:
+            if jetson.ok():
+                power = jetson.power
+                # jtop reports power in milliwatts for total
+                total_mw = power.get("tot", {}).get("power", 0)
+                return total_mw / 1000.0 if total_mw else None
+    except (ImportError, Exception):
+        return None
+
+
+def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
+                  model_size, task, approach, experiment_name, device_name):
+    """Run inference benchmark with warm-up and repeated measurements.
+
+    Args:
+        weights_path: Path to .pt or .engine weights.
+        fmt: 'pytorch' or 'tensorrt'.
+        precision: 'fp32', 'fp16', or 'int8'.
+        imgsz: Input image size.
+        batch: Batch size.
+        architecture: 'yolo26' or 'yolo12'.
+        model_size: 'nano', 'small', 'medium', 'large'.
+        task: 'segment' or 'detect'.
+        approach: 'scratch' or 'pretrained'.
+        experiment_name: Experiment name for results organization.
+        device_name: 'rtx5090', 'jetson_agx', 'jetson_nano'.
+    """
+    start_time = datetime.datetime.now()
+    machine_name = get_machine_name()
+    data_yaml = get_data_yaml_path()
+
+    run_label = f"{architecture} {model_size} | {fmt} {precision} | {task} | {approach}"
+    print("=" * 60)
+    print(f"INFERENCE: {run_label}")
+    print(f"Weights: {weights_path}")
+    print(f"Input: {imgsz}, Batch: {batch}, Device: {device_name}")
+    print(f"Start: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print("=" * 60)
+
+    if not os.path.exists(weights_path):
+        raise FileNotFoundError(f"Weights not found: {weights_path}")
+
+    model = YOLO(weights_path)
+
+    val_kwargs = {
+        "data": data_yaml,
+        "imgsz": imgsz,
+        "batch": batch,
+        "split": "val",
+        "verbose": False,
+    }
+
+    # Warm-up runs
+    print(f"\nWarm-up: {WARMUP_RUNS} runs...")
+    for i in range(WARMUP_RUNS):
+        model.val(**val_kwargs)
+        print(f"  Warm-up {i + 1}/{WARMUP_RUNS} done")
+
+    # Measurement runs
+    print(f"\nMeasuring: {MEASURE_RUNS} runs...")
+    all_pre, all_inf, all_post = [], [], []
+    map50_values, map50_95_values = [], []
+
+    # Measure power during inference (Jetsons only)
+    watts = measure_power_jetson() if device_name.startswith("jetson") else None
+
+    for i in range(MEASURE_RUNS):
+        val_results = model.val(**val_kwargs)
+        speed = val_results.speed
+        all_pre.append(speed.get("preprocess", 0.0))
+        all_inf.append(speed.get("inference", 0.0))
+        all_post.append(speed.get("postprocess", 0.0))
+
+        if hasattr(val_results, "box"):
+            map50_values.append(float(val_results.box.map50))
+            map50_95_values.append(float(val_results.box.map))
+
+        print(f"  Run {i + 1}/{MEASURE_RUNS}: "
+              f"inf={speed.get('inference', 0.0):.2f}ms")
+
+    # Compute averages
+    t_pre = statistics.mean(all_pre)
+    t_inf = statistics.mean(all_inf)
+    t_post = statistics.mean(all_post)
+    t_total_ms = t_pre + t_inf + t_post
+    fps = 1000.0 / t_total_ms if t_total_ms > 0 else 0.0
+
+    map50 = statistics.mean(map50_values) if map50_values else 0.0
+    map50_95 = statistics.mean(map50_95_values) if map50_95_values else 0.0
+
+    fps_per_watt = fps / watts if watts and watts > 0 else None
+
+    end_time = datetime.datetime.now()
+    duration = end_time - start_time
+
+    # Results directory
+    results_dir = get_results_dir(
+        experiment_name, architecture, task, model_size, approach, device_name
+    )
+    os.makedirs(results_dir, exist_ok=True)
+
+    # Determine report filename based on format/precision/imgsz/batch
+    report_name = f"report_{fmt}_{precision}_img{imgsz}_b{batch}.txt"
+    report_path = os.path.join(results_dir, report_name)
+
+    report_data = {
+        "machine": machine_name,
+        "device": device_name,
+        "experiment": experiment_name,
+        "architecture": architecture,
+        "model_size": model_size,
+        "task": task,
+        "approach": approach,
+        "format": fmt,
+        "precision": precision,
+        "imgsz": imgsz,
+        "batch": batch,
+        "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
+        "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
+        "duration": format_duration(duration),
+        "preprocess_ms": t_pre,
+        "inference_ms": t_inf,
+        "postprocess_ms": t_post,
+        "total_ms": t_total_ms,
+        "fps": fps,
+        "map50": map50,
+        "map50_95": map50_95,
+        "watts": watts,
+        "fps_per_watt": fps_per_watt,
+    }
+    save_report(report_path, report_data)
+
+    # Print summary
+    print(f"\n{'=' * 60}")
+    print(f"RESULTS: {run_label}")
+    print(f"  Preprocess:  {t_pre:.2f} ms/img")
+    print(f"  Inference:   {t_inf:.2f} ms/img")
+    print(f"  Postprocess: {t_post:.2f} ms/img")
+    print(f"  Total:       {t_total_ms:.2f} ms/img")
+    print(f"  FPS:         {fps:.2f}")
+    print(f"  mAP50:       {map50:.4f}")
+    print(f"  mAP50-95:    {map50_95:.4f}")
+    if watts:
+        print(f"  Power:       {watts:.2f} W")
+        print(f"  FPS/Watt:    {fps_per_watt:.2f}")
+    print(f"  Duration:    {format_duration(duration)}")
+    print(f"  Report:      {report_path}")
+    print(f"{'=' * 60}")
+
+    return report_data
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Run YOLO inference benchmark")
+    parser.add_argument("--weights", required=True, help="Path to .pt or .engine weights")
+    parser.add_argument("--format", required=True, choices=["pytorch", "tensorrt"],
+                        dest="fmt", help="Model format")
+    parser.add_argument("--precision", default="fp32", choices=["fp32", "fp16", "int8"],
+                        help="Precision")
+    parser.add_argument("--imgsz", type=int, default=640, help="Input image size")
+    parser.add_argument("--batch", type=int, default=1, help="Batch size")
+    parser.add_argument("--arch", required=True, choices=["yolo26", "yolo12"],
+                        help="Architecture")
+    parser.add_argument("--size", required=True,
+                        choices=["nano", "small", "medium", "large"],
+                        help="Model size")
+    parser.add_argument("--task", required=True, choices=["segment", "detect"],
+                        help="Task")
+    parser.add_argument("--approach", required=True, choices=["scratch", "pretrained"],
+                        help="Training approach")
+    parser.add_argument("--experiment", default="core_comparison",
+                        help="Experiment name")
+    parser.add_argument("--device", required=True,
+                        choices=["rtx5090", "jetson_agx", "jetson_nano"],
+                        help="Device name")
+    args = parser.parse_args()
+
+    run_inference(
+        weights_path=args.weights,
+        fmt=args.fmt,
+        precision=args.precision,
+        imgsz=args.imgsz,
+        batch=args.batch,
+        architecture=args.arch,
+        model_size=args.size,
+        task=args.task,
+        approach=args.approach,
+        experiment_name=args.experiment,
+        device_name=args.device,
+    )
+
+
+if __name__ == "__main__":
+    main()

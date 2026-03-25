@@ -1,0 +1,283 @@
+# Benchmark Experimental Design
+# Each run is fully described by its parameters.
+# Orchestrator scripts filter by device and execute accordingly.
+
+# Model size multipliers (for reference, defined in architecture YAMLs):
+#   nano:   depth=0.50, width=0.25
+#   small:  depth=0.50, width=0.50
+#   medium: depth=0.50, width=1.00
+#   large:  depth=1.00, width=1.00
+
+# Warm-up and measurement config
+warmup_runs: 5
+measure_runs: 10
+
+# Shared training hyperparameters file
+hyperparams_file: "hiperparametros.yaml"
+
+# Dataset config
+data_yaml: "data/data.yaml"
+
+# Large model learning rate override (to prevent NaN loss)
+lr0_large: 0.0005
+
+# Model sizes and their architecture YAML patterns
+# Pattern: versionesYolo/{arch}-{task}-{size_key}.yaml
+model_sizes:
+  nano:  "n"
+  small: "s"
+  medium: "m"
+  large: "L"
+
+architectures:
+  - "yolo26"
+  - "yolo12"
+
+tasks:
+  segment: "seg"
+  detect:  "det"
+
+# ============================================================
+# Experiment definitions
+# ============================================================
+
+experiments:
+
+  # ----------------------------------------------------------
+  # Experiment 1: Core comparison
+  # Fixed: batch=1, imgsz=640, task=segment
+  # Varies: format, approach, architecture, model_size
+  # ----------------------------------------------------------
+  - id: 1
+    name: "core_comparison"
+    description: "Core comparison across formats, approaches, and architectures"
+    runs:
+      # PyTorch FP32 - From scratch
+      - format: "pytorch"
+        precision: "fp32"
+        approach: "scratch"
+        task: "segment"
+        imgsz: 640
+        batch: 1
+        architectures: ["yolo26", "yolo12"]
+        model_sizes: ["nano", "small", "medium", "large"]
+        devices:
+          rtx5090: "train+infer"
+          jetson_agx: "infer"
+          jetson_nano: "infer"
+
+      # PyTorch FP32 - Transfer learning
+      - format: "pytorch"
+        precision: "fp32"
+        approach: "pretrained"
+        task: "segment"
+        imgsz: 640
+        batch: 1
+        architectures: ["yolo26", "yolo12"]
+        model_sizes: ["nano", "small", "medium", "large"]
+        devices:
+          rtx5090: "train+infer"
+          jetson_agx: "infer"
+          jetson_nano: "infer"
+
+      # TensorRT FP16 - From scratch
+      - format: "tensorrt"
+        precision: "fp16"
+        approach: "scratch"
+        task: "segment"
+        imgsz: 640
+        batch: 1
+        architectures: ["yolo26", "yolo12"]
+        model_sizes: ["nano", "small", "medium", "large"]
+        devices:
+          rtx5090: "skip"
+          jetson_agx: "export+infer"
+          jetson_nano: "export+infer"
+
+      # TensorRT FP16 - Transfer learning
+      - format: "tensorrt"
+        precision: "fp16"
+        approach: "pretrained"
+        task: "segment"
+        imgsz: 640
+        batch: 1
+        architectures: ["yolo26", "yolo12"]
+        model_sizes: ["nano", "small", "medium", "large"]
+        devices:
+          rtx5090: "skip"
+          jetson_agx: "export+infer"
+          jetson_nano: "export+infer"
+
+      # TensorRT INT8 - From scratch
+      - format: "tensorrt"
+        precision: "int8"
+        approach: "scratch"
+        task: "segment"
+        imgsz: 640
+        batch: 1
+        architectures: ["yolo26", "yolo12"]
+        model_sizes: ["nano", "small", "medium", "large"]
+        devices:
+          rtx5090: "skip"
+          jetson_agx: "export+infer"
+          jetson_nano: "export+infer"
+
+      # TensorRT INT8 - Transfer learning
+      - format: "tensorrt"
+        precision: "int8"
+        approach: "pretrained"
+        task: "segment"
+        imgsz: 640
+        batch: 1
+        architectures: ["yolo26", "yolo12"]
+        model_sizes: ["nano", "small", "medium", "large"]
+        devices:
+          rtx5090: "skip"
+          jetson_agx: "export+infer"
+          jetson_nano: "export+infer"
+
+  # ----------------------------------------------------------
+  # Experiment 2: Input size impact
+  # Fixed: batch=1, format=pytorch fp32, task=segment
+  # Varies: imgsz, approach, architecture, model_size
+  # ----------------------------------------------------------
+  - id: 2
+    name: "input_size"
+    description: "Impact of input resolution on inference performance"
+    runs:
+      - format: "pytorch"
+        precision: "fp32"
+        approach: "scratch"
+        task: "segment"
+        imgsz: 320
+        batch: 1
+        architectures: ["yolo26", "yolo12"]
+        model_sizes: ["nano", "small", "medium", "large"]
+        devices:
+          rtx5090: "infer"
+          jetson_agx: "infer"
+          jetson_nano: "infer"
+
+      - format: "pytorch"
+        precision: "fp32"
+        approach: "scratch"
+        task: "segment"
+        imgsz: 1280
+        batch: 1
+        architectures: ["yolo26", "yolo12"]
+        model_sizes: ["nano", "small", "medium", "large"]
+        devices:
+          rtx5090: "infer"
+          jetson_agx: "infer"
+          jetson_nano: "infer"
+
+      - format: "pytorch"
+        precision: "fp32"
+        approach: "pretrained"
+        task: "segment"
+        imgsz: 320
+        batch: 1
+        architectures: ["yolo26", "yolo12"]
+        model_sizes: ["nano", "small", "medium", "large"]
+        devices:
+          rtx5090: "infer"
+          jetson_agx: "infer"
+          jetson_nano: "infer"
+
+      - format: "pytorch"
+        precision: "fp32"
+        approach: "pretrained"
+        task: "segment"
+        imgsz: 1280
+        batch: 1
+        architectures: ["yolo26", "yolo12"]
+        model_sizes: ["nano", "small", "medium", "large"]
+        devices:
+          rtx5090: "infer"
+          jetson_agx: "infer"
+          jetson_nano: "infer"
+
+  # ----------------------------------------------------------
+  # Experiment 3: Batch throughput
+  # Fixed: imgsz=640, format=pytorch fp32, approach=scratch,
+  #        task=segment, architecture=yolo26
+  # Varies: batch, model_size
+  # ----------------------------------------------------------
+  - id: 3
+    name: "batch_throughput"
+    description: "Impact of batch size on throughput"
+    runs:
+      - format: "pytorch"
+        precision: "fp32"
+        approach: "scratch"
+        task: "segment"
+        imgsz: 640
+        batch: 4
+        architectures: ["yolo26"]
+        model_sizes: ["nano", "small", "medium", "large"]
+        devices:
+          rtx5090: "infer"
+          jetson_agx: "infer"
+          jetson_nano: "infer"
+
+      - format: "pytorch"
+        precision: "fp32"
+        approach: "scratch"
+        task: "segment"
+        imgsz: 640
+        batch: 8
+        architectures: ["yolo26"]
+        model_sizes: ["nano", "small", "medium", "large"]
+        devices:
+          rtx5090: "infer"
+          jetson_agx: "infer"
+          jetson_nano: "infer"
+
+      - format: "pytorch"
+        precision: "fp32"
+        approach: "scratch"
+        task: "segment"
+        imgsz: 640
+        batch: 16
+        architectures: ["yolo26"]
+        model_sizes: ["nano", "small", "medium", "large"]
+        devices:
+          rtx5090: "infer"
+          jetson_agx: "infer"
+          jetson_nano: "infer"
+
+  # ----------------------------------------------------------
+  # Experiment 4: Detection vs Segmentation
+  # Fixed: batch=1, imgsz=640, format=pytorch fp32
+  # Varies: approach, architecture, model_size
+  # (Segmentation already covered in Exp 1)
+  # ----------------------------------------------------------
+  - id: 4
+    name: "detection_vs_segmentation"
+    description: "Detection task comparison (segmentation covered in Exp 1)"
+    runs:
+      - format: "pytorch"
+        precision: "fp32"
+        approach: "scratch"
+        task: "detect"
+        imgsz: 640
+        batch: 1
+        architectures: ["yolo26", "yolo12"]
+        model_sizes: ["nano", "small", "medium", "large"]
+        devices:
+          rtx5090: "train+infer"
+          jetson_agx: "infer"
+          jetson_nano: "infer"
+
+      - format: "pytorch"
+        precision: "fp32"
+        approach: "pretrained"
+        task: "detect"
+        imgsz: 640
+        batch: 1
+        architectures: ["yolo26", "yolo12"]
+        model_sizes: ["nano", "small", "medium", "large"]
+        devices:
+          rtx5090: "train+infer"
+          jetson_agx: "infer"
+          jetson_nano: "infer"
