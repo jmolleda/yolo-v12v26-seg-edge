@@ -144,8 +144,10 @@ class BenchmarkLogger:
 
         self.state["current_run"] = None
         desc = self._run_description(run_entry)
-        fps = result.get("fps", 0) if result else 0
-        self.log("info", f"Completed: {desc} ({fps:.1f} FPS)")
+        if result and result.get("fps"):
+            self.log("info", f"Completed: {desc} ({result['fps']:.1f} FPS)")
+        else:
+            self.log("info", f"Completed: {desc}")
         self._flush()
 
     def fail_run(self, run_id, error):
@@ -356,7 +358,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
 <body>
 <div id="app"></div>
 <script>
-const DATA = /*DATA_PLACEHOLDER*/null;
+const DATA = /*DATA_PLACEHOLDER*/;
 
 function render() {
   if (!DATA) { document.getElementById('app').innerHTML = '<p>No data</p>'; return; }
@@ -434,8 +436,8 @@ function render() {
     </tr></thead><tbody>`;
 
   for (const r of d.runs) {
-    const fps = r.result ? r.result.fps?.toFixed(1) || '-' : '-';
-    const map50 = r.result ? r.result.map50?.toFixed(4) || '-' : '-';
+    const fps = r.result && r.result.fps ? r.result.fps.toFixed(1) : '-';
+    const map50 = r.result && r.result.map50 ? r.result.map50.toFixed(4) : '-';
     const err = r.error && r.status === 'failed' ? ` title="${r.error}"` : '';
     html += `<tr class="run-row" data-status="${r.status}">
       <td><span class="status s-${r.status}"${err}>${r.status}</span></td>

@@ -81,7 +81,7 @@ def main():
                 approach=run["approach"],
                 experiment_name=run["experiment_name"],
             )
-            logger.complete_run(run_id, {"fps": 0, "map50": 0, "map50_95": 0})
+            logger.complete_run(run_id)
         except Exception as e:
             logger.fail_run(run_id, str(e))
 
