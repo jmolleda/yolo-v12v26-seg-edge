@@ -91,7 +91,7 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
         "imgsz": imgsz,
         "batch": batch,
         "split": "val",
-        "verbose": False,
+        "verbose": True,
     }
 
     # Warm-up runs
@@ -105,6 +105,7 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
     all_pre, all_inf, all_post = [], [], []
     map50_values, map50_95_values = [], []
     precision_values, recall_values = [], []
+    per_class_data = None
 
     # Measure power during inference (Jetsons only)
     watts = measure_power_jetson() if device_name.startswith("jetson") else None
@@ -124,6 +125,20 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
 
         print(f"  Run {i + 1}/{MEASURE_RUNS}: "
               f"inf={speed.get('inference', 0.0):.2f}ms")
+
+    # Extract per-class metrics from the last run
+    if hasattr(val_results, "box") and hasattr(val_results.box, "class_result"):
+        class_names = val_results.names if hasattr(val_results, "names") else {}
+        p_cls, r_cls, map50_cls, map50_95_cls = val_results.box.class_result
+        per_class_data = {}
+        for idx in range(len(p_cls)):
+            name = class_names.get(idx, f"class_{idx}")
+            per_class_data[name] = {
+                "precision": float(p_cls[idx]),
+                "recall": float(r_cls[idx]),
+                "map50": float(map50_cls[idx]),
+                "map50_95": float(map50_95_cls[idx]),
+            }
 
     # Compute averages
     t_pre = statistics.mean(all_pre)
@@ -178,6 +193,7 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
         "recall": recall,
         "watts": watts,
         "fps_per_watt": fps_per_watt,
+        "per_class": per_class_data,
     }
     save_report(report_path, report_data)
 
@@ -196,6 +212,13 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
     if watts:
         print(f"  Power:       {watts:.2f} W")
         print(f"  FPS/Watt:    {fps_per_watt:.2f}")
+    if per_class_data:
+        print(f"\n  --- Per-class Accuracy ---")
+        for cls_name, cls_metrics in per_class_data.items():
+            print(f"  {cls_name:8s}  P={cls_metrics['precision']:.4f}  "
+                  f"R={cls_metrics['recall']:.4f}  "
+                  f"mAP50={cls_metrics['map50']:.4f}  "
+                  f"mAP50-95={cls_metrics['map50_95']:.4f}")
     print(f"  Duration:    {format_duration(duration)}")
     print(f"  Report:      {report_path}")
     print(f"{'=' * 60}")

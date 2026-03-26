@@ -146,6 +146,16 @@ def save_report(filepath, report_data):
         f.write(f"Recall:    {report_data.get('recall', 0.0):.4f}\n")
         f.write("-" * 50 + "\n")
 
+        if report_data.get("per_class"):
+            f.write("--- Per-class Accuracy ---\n")
+            f.write(f"{'Class':10s}  {'P':>8s}  {'R':>8s}  {'mAP50':>8s}  {'mAP50-95':>8s}\n")
+            for cls_name, cls_metrics in report_data["per_class"].items():
+                f.write(f"{cls_name:10s}  {cls_metrics['precision']:8.4f}  "
+                        f"{cls_metrics['recall']:8.4f}  "
+                        f"{cls_metrics['map50']:8.4f}  "
+                        f"{cls_metrics['map50_95']:8.4f}\n")
+            f.write("-" * 50 + "\n")
+
         if report_data.get("watts") is not None:
             f.write("--- Power ---\n")
             f.write(f"Power:     {report_data.get('watts', 0.0):.2f} W\n")
