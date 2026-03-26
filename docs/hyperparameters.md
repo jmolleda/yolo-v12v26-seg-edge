@@ -6,7 +6,7 @@ Detailed description of all training hyperparameters defined in `hiperparametros
 
 | Parameter | Value | Ultralytics default | Description |
 |-----------|-------|---------|-------------|
-| `epochs` | **500** | 100 | Maximum number of full passes through the training dataset. Each epoch processes all images once. |
+| `epochs` | **1000** | 100 | Maximum number of full passes through the training dataset. Each epoch processes all images once. |
 | `imgsz` | 640 | 640 | Input image resolution in pixels (images are resized to 640x640). Larger = more detail but slower. |
 | `batch` | 16 | 16 | Number of images processed simultaneously per gradient update. Larger = more stable gradients but more VRAM. |
 | `patience` | **50** | 100 | Early stopping: if mAP doesn't improve for 50 consecutive epochs, training stops. Prevents wasting time when the model has converged. |

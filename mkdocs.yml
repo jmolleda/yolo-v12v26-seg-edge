@@ -1,0 +1,34 @@
+site_name: YOLO Benchmark Suite
+site_description: Benchmark framework for comparing YOLO model performance across GPU and edge devices
+repo_name: BenchMarks
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: blue
+    accent: cyan
+  features:
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+    - toc.integrate
+
+nav:
+  - Home: index.md
+  - Experimental Design: experiments.md
+  - How to Run: execution.md
+  - Monitoring: monitoring.md
+  - Hyperparameters: hyperparameters.md
+  - Environment: environment.md
+  - TODO: todo.md
+
+markdown_extensions:
+  - tables
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.details
+  - attr_list
+  - def_list
