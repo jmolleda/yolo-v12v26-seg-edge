@@ -28,6 +28,32 @@ Trains all models, exports to TensorRT (FP16/INT8), then runs inference:
 python run_rtx5090.py
 ```
 
+#### Background Execution (SSH)
+
+To keep the process running after closing an SSH session use `tmux`:
+
+```bash
+tmux new -s bench
+python run_rtx5090.py   # Ctrl+B, then D to detach
+```
+
+```bash
+tmux attach -t bench    # to reattach later
+```
+
+Or if you prefer a simpler approach:
+
+```bash
+nohup python run_rtx5090.py > bench.log 2>&1 &
+```
+
+Monitor progress:
+
+```bash
+tail -f bench.log          # Console output
+tail -f logs/rtx5090.log   # Orchestrator log
+```
+
 ### Jetson Devices
 
 Three automated phases: (1) copy trained weights from RTX 5090, (2) export to TensorRT, (3) run inference.
@@ -65,25 +91,6 @@ python run_jetson_nano.py --quick-test
 | Inference measurement runs | 10 | 1 |
 
 This runs the exact same experiments and code paths but finishes in minutes instead of days. Results are saved to `results-quick-test/` (separate from the real `results/` directory), so there is no risk of mixing smoke-test data with real benchmark results.
-
-## Background Execution (SSH)
-
-To keep the process running after closing an SSH session:
-
-```bash
-nohup python run_rtx5090.py > bench.log 2>&1 &
-nohup python run_jetson_agx.py > bench.log 2>&1 &
-nohup python run_jetson_nano.py > bench.log 2>&1 &
-```
-
-Monitor progress:
-
-```bash
-tail -f bench.log          # Console output
-tail -f logs/rtx5090.log   # Orchestrator log
-```
-
-Or use `tmux` / `screen` for an interactive session that survives disconnects.
 
 ## Resume
 
