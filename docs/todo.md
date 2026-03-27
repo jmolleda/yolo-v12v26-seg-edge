@@ -23,28 +23,23 @@ The top 3 classes hold 71% of all annotations. Solda has ~12x more instances tha
 
 The augmentations in `hiperparametros.yaml` (mosaic, mixup, copy_paste, flips, rotation, HSV shifts, etc.) apply **uniformly** to all images regardless of class content. They increase visual variety but preserve the original class distribution — an underrepresented class remains underrepresented.
 
-### Proposed solutions
+### Solution: Weighted Sampling (Experiment 5)
 
-1. **Focal Loss** (`fl_gamma: 1.5` in `hiperparametros.yaml`)
-   - One-line change, no data manipulation needed
-   - Down-weights loss for easy/confident predictions (frequent classes), keeps loss high for hard predictions (rare classes)
-   - Does not directly count class instances — responds to model confidence, which correlates with class frequency
-   - Will not fully compensate for a 12x imbalance on its own
+**Implemented** via `scripts/weighted_sampler.py`. Monkey-patches the Ultralytics dataloader to sample images with probability inversely proportional to their class frequency using `WeightedRandomSampler`.
 
-2. **Image duplication (oversampling)**
-   - Duplicate images containing rare classes so all classes appear roughly equally during training
-   - Target copies: IV-4 ×2, IV-1A ×3, IV-3 ×6, IV-6 ×10, IV-5 ×11
-   - Existing augmentations ensure each copy is transformed differently per epoch, reducing overfitting risk
-   - Caveat: images often contain multiple classes (e.g. IV-1B + Solda), so duplicating for a rare class also increases counts of co-occurring classes
-   - Increases epoch time proportionally to the number of added images
+- Each image's weight = max inverse-frequency of any class it contains
+- Images with rare classes (IV-5, IV-6, IV-3) are sampled ~10x more often
+- Total epoch length stays the same (2,188 draws), only the mix changes
+- Validation is unaffected — mAP reflects true performance
 
-3. **Targeted augmentation**
-   - Apply heavier augmentation only to images containing rare classes
-   - More controlled than simple duplication but requires custom logic
+**Experiment 5** trains nano + large models (both architectures, both approaches) with balanced sampling and compares per-class mAP against unbalanced baselines from Experiment 1.
 
-4. **Undersampling majority classes**
-   - Remove some Solda/IV-2/IV-1B images to balance distribution
-   - Simplest approach but loses data
+### Other approaches considered but not used
+
+1. **Focal Loss** (`fl_gamma`) — Would confound the weighted sampling experiment. Discussed as future work.
+2. **Image duplication** — Co-occurrence problem (duplicating for IV-5 also inflates Solda), increases disk/epoch time.
+3. **Targeted augmentation** — AugmenTory library doesn't support rebalancing; Albumentations doesn't handle YOLO polygons natively.
+4. **Undersampling** — Loses data from an already small dataset.
 
 ### Notes
 

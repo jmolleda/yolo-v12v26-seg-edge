@@ -281,3 +281,41 @@ experiments:
           rtx5090: "train+infer"
           jetson_agx: "infer"
           jetson_nano: "infer"
+
+  # ----------------------------------------------------------
+  # Experiment 5: Class imbalance impact
+  # Fixed: batch=1, imgsz=640, format=pytorch fp32, task=segment
+  # Varies: approach (scratch_balanced, pretrained_balanced),
+  #         architecture, model_size (nano, large only)
+  # Compares balanced vs unbalanced training from Experiment 1
+  # RTX 5090 only (inference speed is identical, only accuracy differs)
+  # ----------------------------------------------------------
+  - id: 5
+    name: "class_imbalance"
+    description: "Impact of weighted sampling on class-imbalanced dataset"
+    runs:
+      - format: "pytorch"
+        precision: "fp32"
+        approach: "scratch_balanced"
+        task: "segment"
+        imgsz: 640
+        batch: 1
+        architectures: ["yolo26", "yolo12"]
+        model_sizes: ["nano", "small", "medium", "large"]
+        devices:
+          rtx5090: "train+infer"
+          jetson_agx: "skip"
+          jetson_nano: "skip"
+
+      - format: "pytorch"
+        precision: "fp32"
+        approach: "pretrained_balanced"
+        task: "segment"
+        imgsz: 640
+        batch: 1
+        architectures: ["yolo26", "yolo12"]
+        model_sizes: ["nano", "small", "medium", "large"]
+        devices:
+          rtx5090: "train+infer"
+          jetson_agx: "skip"
+          jetson_nano: "skip"

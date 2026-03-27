@@ -278,7 +278,9 @@ def main():
                         help="Model size")
     parser.add_argument("--task", required=True, choices=["segment", "detect"],
                         help="Task")
-    parser.add_argument("--approach", required=True, choices=["scratch", "pretrained"],
+    parser.add_argument("--approach", required=True,
+                        choices=["scratch", "pretrained",
+                                 "scratch_balanced", "pretrained_balanced"],
                         help="Training approach")
     parser.add_argument("--experiment", default="core_comparison",
                         help="Experiment name")

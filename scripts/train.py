@@ -32,7 +32,7 @@ def train_model(architecture, model_size, task, approach, experiment_name="core_
         architecture: 'yolo26' or 'yolo12'
         model_size: 'nano', 'small', 'medium', 'large'
         task: 'segment' or 'detect'
-        approach: 'scratch' or 'pretrained'
+        approach: 'scratch', 'pretrained', 'scratch_balanced', or 'pretrained_balanced'
         experiment_name: Name of the experiment for results organization.
 
     Returns:
@@ -58,10 +58,15 @@ def train_model(architecture, model_size, task, approach, experiment_name="core_
     train_params.update(hyperparams)
 
     # Approach-specific config
-    if approach == "pretrained":
+    if "pretrained" in approach:
         train_params["pretrained"] = True
     else:
         train_params["pretrained"] = False
+
+    # Weighted sampling for balanced approaches
+    if "balanced" in approach:
+        from scripts.weighted_sampler import apply_weighted_sampling
+        apply_weighted_sampling(get_data_yaml_path())
 
     # Large model lr override to prevent NaN loss
     if model_size == "large":
@@ -81,6 +86,11 @@ def train_model(architecture, model_size, task, approach, experiment_name="core_
             name="train",
             **train_params,
         )
+
+        # Restore default sampling if balanced was used
+        if "balanced" in approach:
+            from scripts.weighted_sampler import restore_default_sampling
+            restore_default_sampling()
 
         save_dir = results.save_dir
 
@@ -154,7 +164,9 @@ def main():
                         help="Model size")
     parser.add_argument("--task", required=True, choices=["segment", "detect"],
                         help="Task type")
-    parser.add_argument("--approach", required=True, choices=["scratch", "pretrained"],
+    parser.add_argument("--approach", required=True,
+                        choices=["scratch", "pretrained",
+                                 "scratch_balanced", "pretrained_balanced"],
                         help="Training approach")
     parser.add_argument("--experiment", default="core_comparison",
                         help="Experiment name for results organization")
