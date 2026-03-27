@@ -213,7 +213,7 @@ experiments:
         task: "segment"
         imgsz: 640
         batch: 4
-        architectures: ["yolo26"]
+        architectures: ["yolo26", "yolo12"]
         model_sizes: ["nano", "small", "medium", "large"]
         devices:
           rtx5090: "infer"
@@ -226,7 +226,7 @@ experiments:
         task: "segment"
         imgsz: 640
         batch: 8
-        architectures: ["yolo26"]
+        architectures: ["yolo26", "yolo12"]
         model_sizes: ["nano", "small", "medium", "large"]
         devices:
           rtx5090: "infer"
@@ -239,7 +239,7 @@ experiments:
         task: "segment"
         imgsz: 640
         batch: 16
-        architectures: ["yolo26"]
+        architectures: ["yolo26", "yolo12"]
         model_sizes: ["nano", "small", "medium", "large"]
         devices:
           rtx5090: "infer"
