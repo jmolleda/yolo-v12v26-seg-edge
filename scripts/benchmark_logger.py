@@ -75,7 +75,7 @@ class BenchmarkLogger:
                 "format": run.get("format", ""),
                 "precision": run.get("precision", ""),
                 "imgsz": run.get("imgsz", 640),
-                "batch": run.get("batch", 1),
+                "batch": run.get("batch", 1) if category != "train" else None,
                 "action": action,
                 "category": category,
                 "status": "pending",
@@ -132,6 +132,10 @@ class BenchmarkLogger:
         run_entry["status"] = "done"
         run_entry["finished_at"] = now
         run_entry["result"] = result
+
+        # Update batch with actual value if provided (AutoBatch resolves -1)
+        if result and result.get("batch") is not None:
+            run_entry["batch"] = result["batch"]
 
         if run_entry["started_at"]:
             start = datetime.datetime.strptime(run_entry["started_at"], "%Y-%m-%d %H:%M:%S")
@@ -239,11 +243,12 @@ class BenchmarkLogger:
 
     @staticmethod
     def _run_description(run_entry):
+        batch = run_entry['batch'] if run_entry['batch'] is not None else '-'
         return (
             f"{run_entry['architecture']} {run_entry['model_size']} | "
             f"{run_entry['format']} {run_entry['precision']} | "
             f"{run_entry['task']} | {run_entry['approach']} | "
-            f"img={run_entry['imgsz']} b={run_entry['batch']}"
+            f"img={run_entry['imgsz']} b={batch}"
         )
 
     def _flush(self):
@@ -430,20 +435,21 @@ function render() {
       <label><input type="checkbox" checked onchange="toggleStatus('skipped')"> Skipped</label>
     </div>
     <table><thead><tr>
-      <th>Status</th><th>Exp</th><th>Arch</th><th>Size</th><th>Task</th>
-      <th>Format</th><th>Prec</th><th>ImgSz</th><th>Batch</th>
+      <th>Status</th><th>Exp</th><th>Action</th><th>Arch</th><th>Size</th><th>Task</th>
+      <th>Approach</th><th>Format</th><th>Prec</th><th>ImgSz</th><th>Batch</th>
       <th>Duration</th><th>FPS</th><th>mAP50</th>
     </tr></thead><tbody>`;
 
   for (const r of d.runs) {
     const fps = r.result && r.result.fps ? r.result.fps.toFixed(1) : '-';
     const map50 = r.result && r.result.map50 ? r.result.map50.toFixed(4) : '-';
+    const batch = r.batch != null ? r.batch : '-';
     const err = r.error && r.status === 'failed' ? ` title="${r.error}"` : '';
     html += `<tr class="run-row" data-status="${r.status}">
       <td><span class="status s-${r.status}"${err}>${r.status}</span></td>
-      <td>${r.experiment}</td><td>${r.architecture}</td><td>${r.model_size}</td>
-      <td>${r.task}</td><td>${r.format}</td><td>${r.precision}</td>
-      <td>${r.imgsz}</td><td>${r.batch}</td>
+      <td>${r.experiment}</td><td>${r.category}</td><td>${r.architecture}</td><td>${r.model_size}</td>
+      <td>${r.task}</td><td>${r.approach}</td><td>${r.format}</td><td>${r.precision}</td>
+      <td>${r.imgsz}</td><td>${batch}</td>
       <td>${r.duration || '-'}</td><td>${fps}</td><td>${map50}</td>
     </tr>`;
   }

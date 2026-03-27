@@ -6,6 +6,7 @@ Supports resume: skips runs that have already completed.
 Usage:
     python run_rtx5090.py
     python run_rtx5090.py --dry-run
+    python run_rtx5090.py --quick-test
 """
 
 import argparse
@@ -18,6 +19,7 @@ from scripts.utils import (
     get_weights_path,
     run_already_completed,
 )
+from scripts import utils as _utils_module
 from scripts.benchmark_logger import BenchmarkLogger
 from scripts.aggregate import find_reports, write_csv
 
@@ -28,7 +30,19 @@ def main():
     parser = argparse.ArgumentParser(description="RTX 5090 benchmark orchestrator")
     parser.add_argument("--dry-run", action="store_true",
                         help="Print runs without executing")
+    parser.add_argument("--quick-test", action="store_true",
+                        help="Quick smoke test: 2 epochs, 0 warmup, 1 measurement run")
     args = parser.parse_args()
+
+    # Quick-test overrides
+    train_overrides = {}
+    infer_overrides = {}
+    if args.quick_test:
+        train_overrides = {"epochs": 2, "patience": 2}
+        infer_overrides = {"warmup_runs": 0, "measure_runs": 1}
+        _utils_module.RESULTS_DIR_NAME = "results-quick-test"
+        print("*** QUICK-TEST MODE: epochs=2, patience=2, warmup=0, measure=1 ***")
+        print("*** Results → results-quick-test/ ***\n")
 
     runs, config = load_experiments(DEVICE)
     logger = BenchmarkLogger(DEVICE)
@@ -80,14 +94,17 @@ def main():
 
         logger.start_run(run_id)
         try:
-            train_model(
+            train_result = train_model(
                 architecture=run["architecture"],
                 model_size=run["model_size"],
                 task=run["task"],
                 approach=run["approach"],
                 experiment_name=run["experiment_name"],
+                hyperparam_overrides=train_overrides if train_overrides else None,
             )
-            logger.complete_run(run_id)
+            logger.complete_run(run_id, {
+                "batch": train_result.get("actual_batch"),
+            })
         except Exception as e:
             logger.fail_run(run_id, str(e))
 
@@ -185,6 +202,7 @@ def main():
                 approach=run["approach"],
                 experiment_name=run["experiment_name"],
                 device_name=DEVICE,
+                **infer_overrides,
             )
             logger.complete_run(run_id, {
                 "fps": result.get("fps", 0),
@@ -197,7 +215,7 @@ def main():
     # Phase 4: Aggregate results
     logger.set_phase("aggregation")
 
-    results_dir = os.path.join(PROJECT_ROOT, "results")
+    results_dir = os.path.join(PROJECT_ROOT, _utils_module.RESULTS_DIR_NAME)
     reports = find_reports(results_dir, device_filter=DEVICE)
     if reports:
         output_base = os.path.join(results_dir, DEVICE, "benchmark_results")

@@ -17,13 +17,13 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from scripts.utils import PROJECT_ROOT
+from scripts.utils import PROJECT_ROOT, RESULTS_DIR_NAME
 
 CSV_COLUMNS = [
     "experiment", "architecture", "model_size", "approach",
     "format", "precision", "task", "imgsz", "batch", "device", "machine",
     "preprocess_ms", "inference_ms", "postprocess_ms", "total_ms", "fps",
-    "map50", "map50_95",
+    "map50", "map50_95", "p_mean", "r_mean",
     "watts", "fps_per_watt",
     "duration", "start_time", "end_time",
 ]
@@ -51,6 +51,8 @@ FIELD_MAP = {
     "FPS": "fps",
     "mAP50-95": "map50_95",
     "mAP50": "map50",
+    "P (mean)": "p_mean",
+    "R (mean)": "r_mean",
     "Power": "watts",
     "FPS/Watt": "fps_per_watt",
 }
@@ -127,7 +129,7 @@ def write_csv(reports, output_path):
 
 def main():
     parser = argparse.ArgumentParser(description="Aggregate benchmark results")
-    parser.add_argument("--results-dir", default=os.path.join(PROJECT_ROOT, "results"),
+    parser.add_argument("--results-dir", default=os.path.join(PROJECT_ROOT, RESULTS_DIR_NAME),
                         help="Results directory to scan")
     parser.add_argument("--device", default=None,
                         choices=["rtx5090", "jetson_agx", "jetson_nano"],

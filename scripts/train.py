@@ -25,7 +25,8 @@ from scripts.utils import (
 )
 
 
-def train_model(architecture, model_size, task, approach, experiment_name="core_comparison"):
+def train_model(architecture, model_size, task, approach, experiment_name="core_comparison",
+                hyperparam_overrides=None):
     """Train a YOLO model with the given configuration.
 
     Args:
@@ -34,6 +35,7 @@ def train_model(architecture, model_size, task, approach, experiment_name="core_
         task: 'segment' or 'detect'
         approach: 'scratch', 'pretrained', 'scratch_balanced', or 'pretrained_balanced'
         experiment_name: Name of the experiment for results organization.
+        hyperparam_overrides: Optional dict of hyperparameters to override (e.g. epochs, patience).
 
     Returns:
         Path to the trained weights (best.pt).
@@ -56,6 +58,10 @@ def train_model(architecture, model_size, task, approach, experiment_name="core_
         "task": task,
     }
     train_params.update(hyperparams)
+
+    # Apply overrides (e.g. --quick-test reduces epochs/patience)
+    if hyperparam_overrides:
+        train_params.update(hyperparam_overrides)
 
     # Approach-specific config
     if "pretrained" in approach:
@@ -86,6 +92,13 @@ def train_model(architecture, model_size, task, approach, experiment_name="core_
             name="train",
             **train_params,
         )
+
+        # Capture the actual batch size used (AutoBatch resolves -1 to a real value)
+        trainer = getattr(model, "trainer", None)
+        if trainer is not None:
+            actual_batch = getattr(trainer, "batch_size", None) or getattr(trainer.args, "batch", None)
+        else:
+            actual_batch = None
 
         # Restore default sampling if balanced was used
         if "balanced" in approach:
@@ -128,9 +141,9 @@ def train_model(architecture, model_size, task, approach, experiment_name="core_
             "task": task,
             "approach": approach,
             "format": "pytorch",
-            "precision": "fp32",
+            "format_precision": "fp32",
             "imgsz": train_params["imgsz"],
-            "batch": train_params["batch"],
+            "batch": actual_batch,
             "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
             "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
             "duration": format_duration(duration),
@@ -148,8 +161,8 @@ def train_model(architecture, model_size, task, approach, experiment_name="core_
         save_report(report_path, report_data)
 
         weights_path = os.path.join(save_dir, "weights", "best.pt")
-        print(f"\nTraining complete. Weights: {weights_path}")
-        return weights_path
+        print(f"\nTraining complete. Batch size: {actual_batch} | Weights: {weights_path}")
+        return {"weights_path": weights_path, "actual_batch": actual_batch}
 
     except Exception as e:
         print(f"CRITICAL ERROR: {e}")
@@ -170,9 +183,13 @@ def main():
                         help="Training approach")
     parser.add_argument("--experiment", default="core_comparison",
                         help="Experiment name for results organization")
+    parser.add_argument("--quick-test", action="store_true",
+                        help="Quick smoke test: 2 epochs, patience=2")
     args = parser.parse_args()
 
-    train_model(args.arch, args.size, args.task, args.approach, args.experiment)
+    overrides = {"epochs": 2, "patience": 2} if args.quick_test else None
+    train_model(args.arch, args.size, args.task, args.approach, args.experiment,
+                hyperparam_overrides=overrides)
 
 
 if __name__ == "__main__":

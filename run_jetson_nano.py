@@ -7,6 +7,7 @@ Supports resume: skips runs that have already completed.
 Usage:
     python run_jetson_nano.py
     python run_jetson_nano.py --dry-run
+    python run_jetson_nano.py --quick-test
 """
 
 import argparse
@@ -18,6 +19,7 @@ from scripts.utils import (
     get_results_dir,
     get_weights_path,
 )
+from scripts import utils as _utils_module
 from scripts.benchmark_logger import BenchmarkLogger
 from scripts.aggregate import find_reports, write_csv
 
@@ -63,7 +65,17 @@ def main():
     parser = argparse.ArgumentParser(description="Jetson Orin Nano benchmark orchestrator")
     parser.add_argument("--dry-run", action="store_true",
                         help="Print runs without executing")
+    parser.add_argument("--quick-test", action="store_true",
+                        help="Quick smoke test: 0 warmup, 1 measurement run")
     args = parser.parse_args()
+
+    # Quick-test overrides (Jetsons don't train, only export+infer)
+    infer_overrides = {}
+    if args.quick_test:
+        infer_overrides = {"warmup_runs": 0, "measure_runs": 1}
+        _utils_module.RESULTS_DIR_NAME = "results-quick-test"
+        print("*** QUICK-TEST MODE: warmup=0, measure=1 ***")
+        print("*** Results → results-quick-test/ ***\n")
 
     runs, config = load_experiments(DEVICE)
     logger = BenchmarkLogger(DEVICE)
@@ -172,6 +184,7 @@ def main():
                 approach=run["approach"],
                 experiment_name=run["experiment_name"],
                 device_name=DEVICE,
+                **infer_overrides,
             )
             logger.complete_run(run_id, {
                 "fps": result.get("fps", 0),
@@ -189,7 +202,7 @@ def main():
     # Phase 3: Aggregate results
     logger.set_phase("aggregation")
 
-    results_dir = os.path.join(PROJECT_ROOT, "results")
+    results_dir = os.path.join(PROJECT_ROOT, _utils_module.RESULTS_DIR_NAME)
     reports = find_reports(results_dir, device_filter=DEVICE)
     if reports:
         output_base = os.path.join(results_dir, DEVICE, "benchmark_results")

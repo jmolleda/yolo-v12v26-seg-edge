@@ -77,14 +77,18 @@ def get_model_config(architecture, task, model_size):
     return f"{architecture}{size_key}{task_suffix}.yaml"
 
 
+# Overridable results directory name (default: "results", quick-test: "results-quick-test")
+RESULTS_DIR_NAME = "results"
+
+
 def get_results_dir(experiment_name, architecture, task, model_size, approach, device_name):
     """Return the results directory path for a specific run.
 
-    Structure: results/{device}/{experiment}/{arch}_{task}_{size}_{approach}/
+    Structure: {RESULTS_DIR_NAME}/{device}/{experiment}/{arch}_{task}_{size}_{approach}/
     """
     task_key = "seg" if task == "segment" else "det"
     folder_name = f"{architecture}_{task_key}_{model_size}_{approach}"
-    return os.path.join(PROJECT_ROOT, "results", device_name, experiment_name, folder_name)
+    return os.path.join(PROJECT_ROOT, RESULTS_DIR_NAME, device_name, experiment_name, folder_name)
 
 
 def get_weights_path(experiment_name, architecture, task, model_size, approach):
@@ -123,7 +127,7 @@ def save_report(filepath, report_data):
         f.write(f"Task: {report_data.get('task', 'unknown')}\n")
         f.write(f"Approach: {report_data.get('approach', 'unknown')}\n")
         f.write(f"Format: {report_data.get('format', 'unknown')}\n")
-        f.write(f"Precision: {report_data.get('precision', 'unknown')}\n")
+        f.write(f"Precision: {report_data.get('format_precision', 'unknown')}\n")
         f.write(f"Input size: {report_data.get('imgsz', 'unknown')}\n")
         f.write(f"Batch size: {report_data.get('batch', 'unknown')}\n")
         f.write(f"Start time: {report_data.get('start_time', 'unknown')}\n")
@@ -154,8 +158,8 @@ def save_report(filepath, report_data):
         f.write("--- Accuracy ---\n")
         f.write(f"mAP50:     {report_data.get('map50', 0.0):.4f}\n")
         f.write(f"mAP50-95:  {report_data.get('map50_95', 0.0):.4f}\n")
-        f.write(f"Precision: {report_data.get('precision', 0.0):.4f}\n")
-        f.write(f"Recall:    {report_data.get('recall', 0.0):.4f}\n")
+        f.write(f"P (mean):  {report_data.get('precision', 0.0):.4f}\n")
+        f.write(f"R (mean):  {report_data.get('recall', 0.0):.4f}\n")
         f.write("-" * 50 + "\n")
 
         if report_data.get("per_class"):

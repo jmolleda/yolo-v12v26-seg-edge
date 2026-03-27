@@ -1,6 +1,6 @@
 # Experimental Design
 
-Five experiments with a total of **376 inference runs** across all devices.
+Five experiments with a total of **408 inference runs** across all devices.
 
 ## Experiment 1 — Core Comparison
 
@@ -30,7 +30,7 @@ Five experiments with a total of **376 inference runs** across all devices.
 
 - **Fixed:** batch=1, imgsz=640, format=PyTorch FP32, task=segment
 - **Varies:** approach (scratch_balanced, pretrained_balanced), architecture, model size (nano, small, medium, large)
-- RTX 5090 only: train + infer (weighted sampling affects accuracy, not inference speed)
+- RTX 5090: train + infer | Jetsons: inference only
 - Compares per-class mAP against unbalanced baselines from Experiment 1
 
 !!! info "Weighted sampling"
@@ -43,9 +43,9 @@ Five experiments with a total of **376 inference runs** across all devices.
 | Device | Training | Export | Inference | Total |
 |--------|:--------:|:------:|:---------:|:-----:|
 | RTX 5090 | 48 | 32 | 136 | 216 |
-| Jetson Orin AGX | 0 | 32 | 120 | 152 |
-| Jetson Orin Nano | 0 | 32 | 120 | 152 |
-| **Total** | **48** | **96** | **376** | **520** |
+| Jetson Orin AGX | 0 | 32 | 136 | 168 |
+| Jetson Orin Nano | 0 | 32 | 136 | 168 |
+| **Total** | **48** | **96** | **408** | **552** |
 
 !!! note "Weight reuse"
     Experiments 2 and 3 reuse trained weights from Experiment 1.

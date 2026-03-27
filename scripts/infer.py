@@ -75,6 +75,7 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
     start_time = datetime.datetime.now()
     machine_name = get_machine_name()
     data_yaml = get_data_yaml_path()
+    fmt_precision = precision  # Save before variable is reused for accuracy metric
 
     run_label = f"{architecture} {model_size} | {fmt} {precision} | {task} | {approach}"
     print("=" * 60)
@@ -171,7 +172,7 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
 
     map50 = statistics.mean(map50_values) if map50_values else 0.0
     map50_95 = statistics.mean(map50_95_values) if map50_95_values else 0.0
-    precision = statistics.mean(precision_values) if precision_values else 0.0
+    precision_acc = statistics.mean(precision_values) if precision_values else 0.0
     recall = statistics.mean(recall_values) if recall_values else 0.0
 
     fps_per_watt = fps / watts if watts and watts > 0 else None
@@ -198,7 +199,7 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
         "task": task,
         "approach": approach,
         "format": fmt,
-        "precision": precision,
+        "format_precision": fmt_precision,
         "imgsz": imgsz,
         "batch": batch,
         "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -216,7 +217,7 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
         "measure_runs": measure_runs,
         "map50": map50,
         "map50_95": map50_95,
-        "precision": precision,
+        "precision": precision_acc,
         "recall": recall,
         "watts": watts,
         "fps_per_watt": fps_per_watt,
@@ -243,7 +244,7 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
         print(f"  GPU mem:     {gpu_mem_peak_mb:.1f} MB (peak)")
     print(f"  mAP50:       {map50:.4f}")
     print(f"  mAP50-95:    {map50_95:.4f}")
-    print(f"  Precision:   {precision:.4f}")
+    print(f"  Precision:   {precision_acc:.4f}")
     print(f"  Recall:      {recall:.4f}")
     if watts:
         print(f"  Power:       {watts:.2f} W")

@@ -304,8 +304,8 @@ experiments:
         model_sizes: ["nano", "small", "medium", "large"]
         devices:
           rtx5090: "train+infer"
-          jetson_agx: "skip"
-          jetson_nano: "skip"
+          jetson_agx: "infer"
+          jetson_nano: "infer"
 
       - format: "pytorch"
         precision: "fp32"
@@ -317,5 +317,5 @@ experiments:
         model_sizes: ["nano", "small", "medium", "large"]
         devices:
           rtx5090: "train+infer"
-          jetson_agx: "skip"
-          jetson_nano: "skip"
+          jetson_agx: "infer"
+          jetson_nano: "infer"

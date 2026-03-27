@@ -47,12 +47,40 @@ python run_jetson_nano.py
     Jetson (FP16 and INT8 with calibration) before running inference.
     No manual export step is needed.
 
+## Quick Test (Smoke Test)
+
+Verify the full pipeline works before launching the real benchmark:
+
+```bash
+python run_rtx5090.py --quick-test
+python run_jetson_agx.py --quick-test
+python run_jetson_nano.py --quick-test
+```
+
+| Parameter | Normal | Quick Test |
+|-----------|--------|------------|
+| Training epochs | 1000 | 2 |
+| Early stopping patience | 50 | 2 |
+| Inference warmup runs | 5 | 0 |
+| Inference measurement runs | 10 | 1 |
+
+This runs the exact same experiments and code paths but finishes in minutes instead of days. Results are saved to `results-quick-test/` (separate from the real `results/` directory), so there is no risk of mixing smoke-test data with real benchmark results.
+
 ## Background Execution (SSH)
 
 To keep the process running after closing an SSH session:
 
 ```bash
-nohup python run_jetson_agx.py > /dev/null 2>&1 &
+nohup python run_rtx5090.py > bench.log 2>&1 &
+nohup python run_jetson_agx.py > bench.log 2>&1 &
+nohup python run_jetson_nano.py > bench.log 2>&1 &
+```
+
+Monitor progress:
+
+```bash
+tail -f bench.log          # Console output
+tail -f logs/rtx5090.log   # Orchestrator log
 ```
 
 Or use `tmux` / `screen` for an interactive session that survives disconnects.
