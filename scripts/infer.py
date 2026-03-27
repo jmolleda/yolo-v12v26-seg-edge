@@ -18,6 +18,8 @@ import os
 import sys
 import statistics
 
+import torch
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from ultralytics import YOLO
@@ -86,6 +88,11 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
         raise FileNotFoundError(f"Weights not found: {weights_path}")
 
     model = YOLO(weights_path)
+    model_file_size_mb = os.path.getsize(weights_path) / (1024 * 1024)
+
+    # Reset peak memory tracking
+    if torch.cuda.is_available():
+        torch.cuda.reset_peak_memory_stats()
 
     val_kwargs = {
         "data": data_yaml,
@@ -126,6 +133,11 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
 
         print(f"  Run {i + 1}/{measure_runs}: "
               f"inf={speed.get('inference', 0.0):.2f}ms")
+
+    # Capture peak GPU memory
+    gpu_mem_peak_mb = None
+    if torch.cuda.is_available():
+        gpu_mem_peak_mb = torch.cuda.max_memory_allocated() / (1024 * 1024)
 
     # Extract per-class metrics from the last run
     if hasattr(val_results, "box") and hasattr(val_results.box, "class_result"):
@@ -209,6 +221,8 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
         "watts": watts,
         "fps_per_watt": fps_per_watt,
         "per_class": per_class_data,
+        "model_file_size_mb": model_file_size_mb,
+        "gpu_mem_peak_mb": gpu_mem_peak_mb,
     }
     save_report(report_path, report_data)
 
@@ -224,6 +238,9 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
     print(f"  p95:         {t_p95:.2f} ms/img")
     print(f"  p99:         {t_p99:.2f} ms/img")
     print(f"  FPS:         {fps:.2f}")
+    print(f"  Model size:  {model_file_size_mb:.1f} MB")
+    if gpu_mem_peak_mb is not None:
+        print(f"  GPU mem:     {gpu_mem_peak_mb:.1f} MB (peak)")
     print(f"  mAP50:       {map50:.4f}")
     print(f"  mAP50-95:    {map50_95:.4f}")
     print(f"  Precision:   {precision:.4f}")

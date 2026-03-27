@@ -145,6 +145,12 @@ def save_report(filepath, report_data):
             f.write(f"Runs:        {report_data.get('measure_runs', 'N/A')}\n")
         f.write("-" * 50 + "\n")
 
+        f.write("--- Resources ---\n")
+        f.write(f"Model size:  {report_data.get('model_file_size_mb', 0.0):.1f} MB\n")
+        if report_data.get("gpu_mem_peak_mb") is not None:
+            f.write(f"GPU mem:     {report_data['gpu_mem_peak_mb']:.1f} MB (peak)\n")
+        f.write("-" * 50 + "\n")
+
         f.write("--- Accuracy ---\n")
         f.write(f"mAP50:     {report_data.get('map50', 0.0):.4f}\n")
         f.write(f"mAP50-95:  {report_data.get('map50_95', 0.0):.4f}\n")
