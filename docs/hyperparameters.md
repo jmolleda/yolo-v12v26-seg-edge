@@ -8,7 +8,7 @@ Detailed description of all training hyperparameters defined in `hiperparametros
 |-----------|-------|---------|-------------|
 | `epochs` | **1000** | 100 | Maximum number of full passes through the training dataset. Each epoch processes all images once. |
 | `imgsz` | 640 | 640 | Input image resolution in pixels (images are resized to 640x640). Larger = more detail but slower. |
-| `batch` | 16 | 16 | Number of images processed simultaneously per gradient update. Larger = more stable gradients but more VRAM. |
+| `batch` | **-1** | 16 | AutoBatch: automatically determines the largest batch size that fits in GPU memory (~60% VRAM utilization). Lets each model train optimally for the available hardware. |
 | `patience` | **50** | 100 | Early stopping: if mAP doesn't improve for 50 consecutive epochs, training stops. Prevents wasting time when the model has converged. |
 
 ## Optimizer

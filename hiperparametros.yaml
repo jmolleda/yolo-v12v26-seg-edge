@@ -1,6 +1,6 @@
 epochs: 1000
 imgsz: 640
-batch: 16
+batch: -1
 patience: 50
 optimizer: 'AdamW'
 lr0: 0.001
