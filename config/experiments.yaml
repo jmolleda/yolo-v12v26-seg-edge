@@ -8,7 +8,7 @@
 #   medium: depth=0.50, width=1.00
 #   large:  depth=1.00, width=1.00
 
-# Warm-up and measurement config
+# Warm-up and measurement config (defaults, overridable via --warmup / --runs CLI args)
 warmup_runs: 5
 measure_runs: 10
 

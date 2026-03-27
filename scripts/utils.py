@@ -137,6 +137,12 @@ def save_report(filepath, report_data):
         f.write(f"Postprocess: {report_data.get('postprocess_ms', 0.0):.2f} ms/img\n")
         f.write(f"Total:       {report_data.get('total_ms', 0.0):.2f} ms/img\n")
         f.write(f"FPS:         {report_data.get('fps', 0.0):.2f}\n")
+        if report_data.get("median_ms") is not None:
+            f.write(f"Median:      {report_data['median_ms']:.2f} ms/img\n")
+            f.write(f"Std dev:     {report_data['stdev_ms']:.2f} ms\n")
+            f.write(f"p95:         {report_data['p95_ms']:.2f} ms/img\n")
+            f.write(f"p99:         {report_data['p99_ms']:.2f} ms/img\n")
+            f.write(f"Runs:        {report_data.get('measure_runs', 'N/A')}\n")
         f.write("-" * 50 + "\n")
 
         f.write("--- Accuracy ---\n")

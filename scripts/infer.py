@@ -29,9 +29,9 @@ from scripts.utils import (
     format_duration,
 )
 
-# Warm-up and measurement config
-WARMUP_RUNS = 5
-MEASURE_RUNS = 10
+# Warm-up and measurement config (defaults, overridable via CLI)
+DEFAULT_WARMUP_RUNS = 5
+DEFAULT_MEASURE_RUNS = 10
 
 
 def measure_power_jetson():
@@ -53,7 +53,8 @@ def measure_power_jetson():
 
 
 def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
-                  model_size, task, approach, experiment_name, device_name):
+                  model_size, task, approach, experiment_name, device_name,
+                  warmup_runs=DEFAULT_WARMUP_RUNS, measure_runs=DEFAULT_MEASURE_RUNS):
     """Run inference benchmark with warm-up and repeated measurements.
 
     Args:
@@ -95,13 +96,13 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
     }
 
     # Warm-up runs
-    print(f"\nWarm-up: {WARMUP_RUNS} runs...")
-    for i in range(WARMUP_RUNS):
+    print(f"\nWarm-up: {warmup_runs} runs...")
+    for i in range(warmup_runs):
         model.val(**val_kwargs)
-        print(f"  Warm-up {i + 1}/{WARMUP_RUNS} done")
+        print(f"  Warm-up {i + 1}/{warmup_runs} done")
 
     # Measurement runs
-    print(f"\nMeasuring: {MEASURE_RUNS} runs...")
+    print(f"\nMeasuring: {measure_runs} runs...")
     all_pre, all_inf, all_post = [], [], []
     map50_values, map50_95_values = [], []
     precision_values, recall_values = [], []
@@ -110,7 +111,7 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
     # Measure power during inference (Jetsons only)
     watts = measure_power_jetson() if device_name.startswith("jetson") else None
 
-    for i in range(MEASURE_RUNS):
+    for i in range(measure_runs):
         val_results = model.val(**val_kwargs)
         speed = val_results.speed
         all_pre.append(speed.get("preprocess", 0.0))
@@ -123,7 +124,7 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
             precision_values.append(float(val_results.box.mp))
             recall_values.append(float(val_results.box.mr))
 
-        print(f"  Run {i + 1}/{MEASURE_RUNS}: "
+        print(f"  Run {i + 1}/{measure_runs}: "
               f"inf={speed.get('inference', 0.0):.2f}ms")
 
     # Extract per-class metrics from the last run
@@ -146,6 +147,15 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
     t_post = statistics.mean(all_post)
     t_total_ms = t_pre + t_inf + t_post
     fps = 1000.0 / t_total_ms if t_total_ms > 0 else 0.0
+
+    # Compute latency percentiles on total per-run time
+    all_total = [p + i + o for p, i, o in zip(all_pre, all_inf, all_post)]
+    all_total_sorted = sorted(all_total)
+    n = len(all_total_sorted)
+    t_median = statistics.median(all_total_sorted)
+    t_stdev = statistics.stdev(all_total_sorted) if n >= 2 else 0.0
+    t_p95 = all_total_sorted[int(n * 0.95)] if n >= 20 else all_total_sorted[-1]
+    t_p99 = all_total_sorted[int(n * 0.99)] if n >= 100 else all_total_sorted[-1]
 
     map50 = statistics.mean(map50_values) if map50_values else 0.0
     map50_95 = statistics.mean(map50_95_values) if map50_95_values else 0.0
@@ -187,6 +197,11 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
         "postprocess_ms": t_post,
         "total_ms": t_total_ms,
         "fps": fps,
+        "median_ms": t_median,
+        "stdev_ms": t_stdev,
+        "p95_ms": t_p95,
+        "p99_ms": t_p99,
+        "measure_runs": measure_runs,
         "map50": map50,
         "map50_95": map50_95,
         "precision": precision,
@@ -203,7 +218,11 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
     print(f"  Preprocess:  {t_pre:.2f} ms/img")
     print(f"  Inference:   {t_inf:.2f} ms/img")
     print(f"  Postprocess: {t_post:.2f} ms/img")
-    print(f"  Total:       {t_total_ms:.2f} ms/img")
+    print(f"  Total:       {t_total_ms:.2f} ms/img (mean, n={measure_runs})")
+    print(f"  Median:      {t_median:.2f} ms/img")
+    print(f"  Std dev:     {t_stdev:.2f} ms")
+    print(f"  p95:         {t_p95:.2f} ms/img")
+    print(f"  p99:         {t_p99:.2f} ms/img")
     print(f"  FPS:         {fps:.2f}")
     print(f"  mAP50:       {map50:.4f}")
     print(f"  mAP50-95:    {map50_95:.4f}")
@@ -249,6 +268,10 @@ def main():
     parser.add_argument("--device", required=True,
                         choices=["rtx5090", "jetson_agx", "jetson_nano"],
                         help="Device name")
+    parser.add_argument("--warmup", type=int, default=DEFAULT_WARMUP_RUNS,
+                        help=f"Number of warm-up runs (default: {DEFAULT_WARMUP_RUNS})")
+    parser.add_argument("--runs", type=int, default=DEFAULT_MEASURE_RUNS,
+                        help=f"Number of measurement runs (default: {DEFAULT_MEASURE_RUNS})")
     args = parser.parse_args()
 
     run_inference(
@@ -263,6 +286,8 @@ def main():
         approach=args.approach,
         experiment_name=args.experiment,
         device_name=args.device,
+        warmup_runs=args.warmup,
+        measure_runs=args.runs,
     )
 
 
