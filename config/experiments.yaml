@@ -90,7 +90,7 @@ experiments:
         architectures: ["yolo26", "yolo12"]
         model_sizes: ["nano", "small", "medium", "large"]
         devices:
-          rtx5090: "skip"
+          rtx5090: "export+infer"
           jetson_agx: "export+infer"
           jetson_nano: "export+infer"
 
@@ -104,7 +104,7 @@ experiments:
         architectures: ["yolo26", "yolo12"]
         model_sizes: ["nano", "small", "medium", "large"]
         devices:
-          rtx5090: "skip"
+          rtx5090: "export+infer"
           jetson_agx: "export+infer"
           jetson_nano: "export+infer"
 
@@ -118,7 +118,7 @@ experiments:
         architectures: ["yolo26", "yolo12"]
         model_sizes: ["nano", "small", "medium", "large"]
         devices:
-          rtx5090: "skip"
+          rtx5090: "export+infer"
           jetson_agx: "export+infer"
           jetson_nano: "export+infer"
 
@@ -132,7 +132,7 @@ experiments:
         architectures: ["yolo26", "yolo12"]
         model_sizes: ["nano", "small", "medium", "large"]
         devices:
-          rtx5090: "skip"
+          rtx5090: "export+infer"
           jetson_agx: "export+infer"
           jetson_nano: "export+infer"
 

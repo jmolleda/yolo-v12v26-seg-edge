@@ -33,17 +33,22 @@ def main():
     runs, config = load_experiments(DEVICE)
     logger = BenchmarkLogger(DEVICE)
 
-    # Separate training and inference runs
+    # Separate training, export, and inference runs
     train_runs = [r for r in runs if "train" in r["action"]]
-    infer_runs = [r for r in runs if r["action"] in ("infer", "train+infer")]
+    export_runs = [r for r in runs if "export" in r["action"]]
+    infer_runs = runs  # all runs include inference
 
-    logger.log("info", f"Training runs: {len(train_runs)}, Inference runs: {len(infer_runs)}")
+    logger.log("info", f"Training: {len(train_runs)}, Export: {len(export_runs)}, Inference: {len(infer_runs)}")
 
     if args.dry_run:
         print("\n--- TRAINING RUNS ---")
         for i, r in enumerate(train_runs, 1):
             print(f"  {i:3d}. {r['architecture']} {r['model_size']} | "
                   f"{r['task']} | {r['approach']} | exp={r['experiment_name']}")
+        print(f"\n--- EXPORT RUNS ---")
+        for i, r in enumerate(export_runs, 1):
+            print(f"  {i:3d}. {r['architecture']} {r['model_size']} | "
+                  f"{r['precision']} | {r['task']} | {r['approach']}")
         print(f"\n--- INFERENCE RUNS ---")
         for i, r in enumerate(infer_runs, 1):
             print(f"  {i:3d}. {r['architecture']} {r['model_size']} | "
@@ -54,6 +59,7 @@ def main():
     # Lazy imports (require ultralytics)
     from scripts.train import train_model
     from scripts.infer import run_inference
+    from scripts.export import export_model
 
     # Register all runs with the logger
     logger.register_runs(runs)
@@ -85,7 +91,45 @@ def main():
         except Exception as e:
             logger.fail_run(run_id, str(e))
 
-    # Phase 2: Inference
+    # Phase 2: Export TensorRT models
+    logger.set_phase("export")
+    exported = set()
+
+    for run in export_runs:
+        run_id = BenchmarkLogger.make_run_id(run)
+
+        if run["experiment_name"] in ("input_size", "batch_throughput"):
+            weights_experiment = "core_comparison"
+        elif run["experiment_name"] == "detection_vs_segmentation":
+            weights_experiment = "detection_vs_segmentation"
+        else:
+            weights_experiment = run["experiment_name"]
+
+        pt_path = get_weights_path(
+            weights_experiment, run["architecture"], run["task"],
+            run["model_size"], run["approach"],
+        )
+        engine_path = pt_path.replace(".pt", ".engine")
+        export_key = (pt_path, run["precision"])
+
+        if export_key in exported or os.path.exists(engine_path):
+            logger.skip_run(run_id, "already exported")
+            exported.add(export_key)
+            continue
+
+        if not os.path.exists(pt_path):
+            logger.fail_run(run_id, f"no weights: {pt_path}")
+            continue
+
+        logger.start_run(run_id)
+        try:
+            export_model(pt_path, run["precision"], run["imgsz"])
+            exported.add(export_key)
+            logger.complete_run(run_id)
+        except Exception as e:
+            logger.fail_run(run_id, str(e))
+
+    # Phase 3: Inference
     logger.set_phase("inference")
 
     for run in infer_runs:
@@ -103,10 +147,16 @@ def main():
         else:
             weights_experiment = run["experiment_name"]
 
-        weights_path = get_weights_path(
+        pt_path = get_weights_path(
             weights_experiment, run["architecture"], run["task"],
             run["model_size"], run["approach"],
         )
+
+        # Use engine file for TensorRT runs
+        if run["format"] == "tensorrt":
+            weights_path = pt_path.replace(".pt", ".engine")
+        else:
+            weights_path = pt_path
 
         # Check if already run
         report_name = (f"report_{run['format']}_{run['precision']}_"
@@ -144,7 +194,7 @@ def main():
         except Exception as e:
             logger.fail_run(run_id, str(e))
 
-    # Phase 3: Aggregate results
+    # Phase 4: Aggregate results
     logger.set_phase("aggregation")
 
     results_dir = os.path.join(PROJECT_ROOT, "results")
