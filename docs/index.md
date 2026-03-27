@@ -8,7 +8,7 @@ The system evaluates **YOLOv26** and **YOLOv12** architectures on a weld inspect
 
 | Device | Role | Memory |
 |--------|------|--------|
-| **NVIDIA RTX 5090** | Training + inference (PyTorch FP32) | 32 GB dedicated VRAM |
+| **NVIDIA RTX 5090** | Training + TensorRT export + inference (PyTorch FP32, TensorRT FP16/INT8) | 32 GB dedicated VRAM |
 | **Jetson Orin AGX** | TensorRT export + inference | 64 GB shared |
 | **Jetson Orin Nano** | TensorRT export + inference | 8 GB shared |
 
@@ -25,10 +25,13 @@ The system evaluates **YOLOv26** and **YOLOv12** architectures on a weld inspect
 
 Each inference run measures:
 
-- **Preprocess / Inference / Postprocess** timing (ms/image, averaged over 10 runs after 5 warm-up runs)
+- **Preprocess / Inference / Postprocess** timing (ms/image, averaged over N runs after warm-up; configurable via `--runs` and `--warmup`)
+- **Latency statistics**: mean, median, std dev, p95, p99
 - **FPS** (frames per second)
 - **mAP50** and **mAP50-95** (accuracy)
-- **Precision** and **Recall**
+- **Precision** and **Recall** (overall and per-class)
+- **Model file size** (MB on disk)
+- **GPU peak memory** usage (MB)
 - **Power consumption** in watts (Jetson devices only, via `jtop`)
 - **FPS/Watt** efficiency (Jetson devices only)
 
@@ -45,7 +48,7 @@ BenchMarks/
 │   ├── export.py                 # TensorRT export (FP16/INT8)
 │   ├── aggregate.py              # Collect reports into CSV
 │   └── benchmark_logger.py       # HTML dashboard + JSON status logging
-├── run_rtx5090.py                # RTX 5090 orchestrator (train → infer → aggregate)
+├── run_rtx5090.py                # RTX 5090 orchestrator (train → export → infer → aggregate)
 ├── run_jetson_agx.py             # Jetson AGX orchestrator (export → infer → aggregate)
 ├── run_jetson_nano.py            # Jetson Nano orchestrator (export → infer → aggregate + OOM protection)
 ├── hiperparametros.yaml          # Shared training hyperparameters

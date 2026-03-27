@@ -22,7 +22,7 @@ python run_jetson_nano.py --dry-run
 
 ### RTX 5090
 
-Trains all models, then runs inference:
+Trains all models, exports to TensorRT (FP16/INT8), then runs inference:
 
 ```bash
 python run_rtx5090.py

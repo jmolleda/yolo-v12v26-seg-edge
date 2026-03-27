@@ -1,12 +1,12 @@
 # Experimental Design
 
-Four experiments with a total of **292 runs** across all devices.
+Four experiments with a total of **360 inference runs** across all devices.
 
 ## Experiment 1 — Core Comparison
 
 - **Fixed:** batch=1, imgsz=640, task=segment
 - **Varies:** format (PyTorch FP32, TensorRT FP16, TensorRT INT8), approach (scratch, pretrained), architecture, model size
-- RTX 5090: train + infer (PyTorch) | Jetsons: export + infer (TensorRT)
+- RTX 5090: train + infer (PyTorch), export + infer (TensorRT FP16/INT8) | Jetsons: export + infer (TensorRT)
 
 ## Experiment 2 — Input Size Impact
 
@@ -16,8 +16,8 @@ Four experiments with a total of **292 runs** across all devices.
 
 ## Experiment 3 — Batch Throughput
 
-- **Fixed:** imgsz=640, format=PyTorch FP32, approach=scratch, task=segment, architecture=yolo26
-- **Varies:** batch (4, 8, 16), model size
+- **Fixed:** imgsz=640, format=PyTorch FP32, approach=scratch, task=segment
+- **Varies:** batch (4, 8, 16), architecture, model size
 - All devices: inference only (reuses weights from Experiment 1)
 
 ## Experiment 4 — Detection vs Segmentation
@@ -28,12 +28,12 @@ Four experiments with a total of **292 runs** across all devices.
 
 ## Run Distribution
 
-| Device | Training | Inference | Total |
-|--------|:--------:|:---------:|:-----:|
-| RTX 5090 | 32 | 76 | 76 |
-| Jetson Orin AGX | 0 | 108 | 108 |
-| Jetson Orin Nano | 0 | 108 | 108 |
-| **Total** | **32** | **292** | **292** |
+| Device | Training | Export | Inference | Total |
+|--------|:--------:|:------:|:---------:|:-----:|
+| RTX 5090 | 32 | 32 | 120 | 184 |
+| Jetson Orin AGX | 0 | 32 | 120 | 152 |
+| Jetson Orin Nano | 0 | 32 | 120 | 152 |
+| **Total** | **32** | **96** | **360** | **488** |
 
 !!! note "Weight reuse"
     Experiments 2 and 3 reuse trained weights from Experiment 1.
