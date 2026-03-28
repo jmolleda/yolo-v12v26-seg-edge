@@ -178,13 +178,17 @@ class BenchmarkLogger:
         self.log("error", f"Failed: {desc} - {error}")
         self._flush()
 
-    def skip_run(self, run_id, reason="already done"):
-        """Mark a run as skipped."""
+    def skip_run(self, run_id, reason="already done", report_path=None):
+        """Mark a run as skipped, loading metrics from existing report if available."""
         run_entry = self._find_run(run_id)
         if not run_entry:
             return
         run_entry["status"] = "skipped"
         run_entry["error"] = reason
+
+        # Load metrics from existing report
+        if report_path and os.path.exists(report_path):
+            self._load_report_into_run(run_entry, report_path)
 
         cat = run_entry["category"]
         if cat in self.state["counters"]:
@@ -193,6 +197,43 @@ class BenchmarkLogger:
         desc = self._run_description(run_entry)
         self.log("info", f"Skipped: {desc} ({reason})")
         self._flush()
+
+    @staticmethod
+    def _load_report_into_run(run_entry, report_path):
+        """Parse report.txt and populate run_entry with saved metrics."""
+        import re
+        with open(report_path, "r") as f:
+            content = f.read()
+
+        def _extract(pattern, text, cast=str):
+            m = re.search(pattern, text)
+            return cast(m.group(1)) if m else None
+
+        run_entry["duration"] = _extract(r"Duration:\s+(.+)", content)
+        batch = _extract(r"Batch size:\s+(\d+)", content, int)
+        if batch is not None:
+            run_entry["batch"] = batch
+
+        result = {}
+        fps = _extract(r"FPS:\s+([\d.]+)", content, float)
+        if fps:
+            result["fps"] = fps
+        mAP50 = _extract(r"mAP50:\s+([\d.]+)", content, float)
+        if mAP50 is not None:
+            result["mAP50"] = mAP50
+        mAP50_95 = _extract(r"mAP50-95:\s+([\d.]+)", content, float)
+        if mAP50_95 is not None:
+            result["mAP50_95"] = mAP50_95
+
+        start = _extract(r"Start time:\s+(.+)", content)
+        end = _extract(r"End time:\s+(.+)", content)
+        if start:
+            run_entry["started_at"] = start.strip()
+        if end:
+            run_entry["finished_at"] = end.strip()
+
+        if result:
+            run_entry["result"] = result
 
     def log(self, level, message):
         """Add a message to the rolling log buffer and plain-text log."""

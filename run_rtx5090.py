@@ -89,7 +89,8 @@ def main():
         )
 
         if run_already_completed(results_dir, "train+infer"):
-            logger.skip_run(run_id, "already done")
+            report_path = os.path.join(results_dir, "report.txt")
+            logger.skip_run(run_id, "already done", report_path=report_path)
             continue
 
         logger.start_run(run_id)
@@ -181,7 +182,7 @@ def main():
         report_path = os.path.join(results_dir, report_name)
 
         if os.path.exists(report_path):
-            logger.skip_run(run_id, "already done")
+            logger.skip_run(run_id, "already done", report_path=report_path)
             continue
 
         if not os.path.exists(weights_path):

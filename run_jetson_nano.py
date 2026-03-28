@@ -160,7 +160,7 @@ def main():
         report_path = os.path.join(results_dir, report_name)
 
         if os.path.exists(report_path):
-            logger.skip_run(run_id, "already done")
+            logger.skip_run(run_id, "already done", report_path=report_path)
             continue
 
         pt_path, engine_path, needs_export = resolve_weights(run)
