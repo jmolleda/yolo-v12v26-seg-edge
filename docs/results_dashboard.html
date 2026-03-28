@@ -276,10 +276,16 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-    // Resize charts in newly visible tab (fixes stretched rendering)
-    setTimeout(() => {
-      Object.values(Chart.instances).forEach(c => c.resize());
-    }, 50);
+    // Resize charts in newly visible tab without flicker
+    const activeTab = document.getElementById('tab-' + btn.dataset.tab);
+    activeTab.style.visibility = 'hidden';
+    requestAnimationFrame(() => {
+      activeTab.querySelectorAll('canvas').forEach(canvas => {
+        const chart = Chart.getChart(canvas);
+        if (chart) chart.resize();
+      });
+      activeTab.style.visibility = '';
+    });
   });
 });
 
