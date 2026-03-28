@@ -350,7 +350,23 @@ def read_hardware_metrics():
                                 metrics[model_key]["model_file_mb"] = round(size_mb, 1)
                             break
 
-    result = list(metrics.values())
+    # Merge with cached metrics (preserves data from previous bench.log runs)
+    cache_path = os.path.join(BASE_DIR, "hw_metrics_cache.json")
+    cached = {}
+    if os.path.exists(cache_path):
+        with open(cache_path, "r") as f:
+            for item in json.load(f):
+                cached[item["model_key"]] = item
+
+    # New data takes precedence over cache
+    for key, val in metrics.items():
+        cached[key] = val
+
+    # Save updated cache
+    with open(cache_path, "w") as f:
+        json.dump(list(cached.values()), f, indent=2)
+
+    result = list(cached.values())
     print(f"Found hardware metrics for {len(result)} model configs")
     return result
 
