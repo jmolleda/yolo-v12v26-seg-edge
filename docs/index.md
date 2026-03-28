@@ -1,4 +1,4 @@
-# YOLO Benchmark Suite
+# YOLO v12 v26 Segmentation Edge
 
 Benchmark framework for comparing YOLO model performance across GPU and edge devices.
 

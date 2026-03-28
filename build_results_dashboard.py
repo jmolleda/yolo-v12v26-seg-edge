@@ -372,7 +372,7 @@ def build_html(training_models, inference_reports, train_reports, hw_metrics):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YOLO v12 v26 segmentation edge results dashboard</title>
+<title>YOLO v12 v26 Segmentation Edge — Results Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
   * {{ margin: 0; padding: 0; box-sizing: border-box; }}

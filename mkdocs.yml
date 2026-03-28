@@ -1,4 +1,4 @@
-site_name: YOLO v12 v26 segmentation edge
+site_name: YOLO v12 v26 Segmentation Edge
 site_description: Benchmark framework for comparing YOLO model performance across GPU and edge devices
 # site_url set at build time in CI (see .github/workflows/deploy-docs.yml)
 repo_url: https://github.com/jmolleda/yolo-v12v26-seg-edge
