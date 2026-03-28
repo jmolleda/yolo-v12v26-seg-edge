@@ -24,10 +24,7 @@ jobs:
 
       - run: pip install mkdocs mkdocs-material
 
-      - name: Copy dashboard into docs
-        run: |
-          if [ -f results_dashboard.html ]; then
-            cp results_dashboard.html docs/
-          fi
+      - run: |
+          echo 'site_url: https://jmolleda.github.io/yolo-v12v26-seg-edge/' >> mkdocs.yml
+          mkdocs gh-deploy --force
 
-      - run: mkdocs gh-deploy --force

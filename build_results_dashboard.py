@@ -14,7 +14,7 @@ import glob
 import re
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-OUTPUT_HTML = os.path.join(BASE_DIR, "results_dashboard.html")
+OUTPUT_HTML = os.path.join(BASE_DIR, "docs", "results_dashboard.html")
 
 # Auto-discover run_*/ folders with results
 DEVICE_DIRS = {}
@@ -372,7 +372,7 @@ def build_html(training_models, inference_reports, train_reports, hw_metrics):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YOLO Benchmark Results Dashboard</title>
+<title>YOLO v12 v26 segmentation edge results dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
   * {{ margin: 0; padding: 0; box-sizing: border-box; }}
@@ -1247,6 +1247,7 @@ renderResources();
         f.write(html)
     print(f"Written {OUTPUT_HTML}")
     print(f"File size: {os.path.getsize(OUTPUT_HTML) / 1024:.1f} KB")
+
 
 
 if __name__ == "__main__":
