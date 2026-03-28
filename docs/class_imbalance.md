@@ -19,7 +19,7 @@ The top 3 classes hold 71% of all annotations. Solda has ~12x more instances tha
 
 ## Why current augmentation does not help
 
-The augmentations in `hiperparametros.yaml` (mosaic, mixup, copy_paste, flips, rotation, HSV shifts, etc.) apply **uniformly** to all images regardless of class content. They increase visual variety but preserve the original class distribution — an underrepresented class remains underrepresented.
+The augmentations in `hyperparameters.yaml` (mosaic, mixup, copy_paste, flips, rotation, HSV shifts, etc.) apply **uniformly** to all images regardless of class content. They increase visual variety but preserve the original class distribution — an underrepresented class remains underrepresented.
 
 ## Solution: Weighted Sampling (Experiment 5)
 
@@ -42,5 +42,5 @@ The augmentations in `hiperparametros.yaml` (mosaic, mixup, copy_paste, flips, r
 ## Notes
 
 - For the benchmark (comparing architectures/formats), the imbalance affects all models equally, so comparisons remain fair
-- The imbalance should be documented in the thesis as a dataset limitation
+- The imbalance should be documented with the results as a dataset limitation
 - Per-class mAP from the benchmark results will quantify the actual impact

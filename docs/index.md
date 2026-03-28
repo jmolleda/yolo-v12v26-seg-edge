@@ -51,7 +51,7 @@ BenchMarks/
 ├── run_rtx5090.py                # RTX 5090 orchestrator (train → export → infer → aggregate)
 ├── run_jetson_agx.py             # Jetson AGX orchestrator (export → infer → aggregate)
 ├── run_jetson_nano.py            # Jetson Nano orchestrator (export → infer → aggregate + OOM protection)
-├── hiperparametros.yaml          # Shared training hyperparameters
+├── hyperparameters.yaml          # Shared training hyperparameters
 ├── mkdocs.yml                    # MkDocs documentation config
 ├── data/
 │   └── data.yaml                 # Dataset config (8 weld inspection classes)

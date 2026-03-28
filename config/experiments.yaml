@@ -13,7 +13,7 @@ warmup_runs: 5
 measure_runs: 10
 
 # Shared training hyperparameters file
-hyperparams_file: "hiperparametros.yaml"
+hyperparams_file: "hyperparameters.yaml"
 
 # Dataset config
 data_yaml: "data/data.yaml"

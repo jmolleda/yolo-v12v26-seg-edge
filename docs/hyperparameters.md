@@ -1,6 +1,6 @@
 # Hyperparameters
 
-Detailed description of all training hyperparameters defined in `hiperparametros.yaml`.
+Detailed description of all training hyperparameters defined in `hyperparameters.yaml`.
 
 ## Training parameters
 

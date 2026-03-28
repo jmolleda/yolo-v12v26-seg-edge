@@ -50,8 +50,8 @@ def load_experiments(device_name):
 
 
 def load_hyperparams():
-    """Load shared training hyperparameters from hiperparametros.yaml."""
-    path = os.path.join(PROJECT_ROOT, "hiperparametros.yaml")
+    """Load shared training hyperparameters from hyperparameters.yaml."""
+    path = os.path.join(PROJECT_ROOT, "hyperparameters.yaml")
     with open(path, "r") as f:
         return yaml.safe_load(f)
 
