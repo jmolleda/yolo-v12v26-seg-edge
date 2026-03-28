@@ -250,10 +250,116 @@ def read_train_reports():
     return reports
 
 
-def build_html(training_models, inference_reports, train_reports):
+def read_hardware_metrics():
+    """Parse bench.log and train folders for hardware/model metrics.
+
+    Extracts per-model: parameters, GFLOPs, layers, GPU memory usage,
+    AutoBatch memory, model file size from weights/best.pt.
+    Returns dict keyed by model config string (e.g. 'YOLO26n-seg').
+    """
+    metrics = {}
+
+    for entry in sorted(os.listdir(BASE_DIR)):
+        if not entry.startswith("run_") or not os.path.isdir(os.path.join(BASE_DIR, entry)):
+            continue
+        device = entry.replace("run_", "")
+        log_path = os.path.join(BASE_DIR, entry, "bench.log")
+        if not os.path.exists(log_path):
+            continue
+
+        # Strip ANSI escape codes for easier parsing
+        with open(log_path, "r", errors="replace") as f:
+            content = f.read()
+        content = re.sub(r'\x1b\[[0-9;]*m', '', content)
+
+        # Parse model summaries: "YOLO26n-seg summary: 309 layers, 3,056,240 parameters, ... 10.2 GFLOPs"
+        for m in re.finditer(
+            r'(YOLO\w+-?\w*)\s+summary:\s*(\d+)\s+layers,\s+([\d,]+)\s+parameters,\s+[\d,]+\s+gradients,\s+([\d.]+)\s+GFLOPs',
+            content
+        ):
+            model_key = m.group(1)
+            layers = int(m.group(2))
+            params = int(m.group(3).replace(",", ""))
+            gflops = float(m.group(4))
+
+            if model_key not in metrics:
+                metrics[model_key] = {
+                    "model_key": model_key,
+                    "device": device,
+                    "layers": layers,
+                    "params": params,
+                    "gflops": gflops,
+                    "gpu_name": None,
+                    "gpu_total_gb": None,
+                    "autobatch_mem_gb": None,
+                    "autobatch_pct": None,
+                    "train_gpu_mem_gb": None,
+                    "model_file_mb": None,
+                }
+
+        # Parse GPU info: "CUDA:0 (NVIDIA GeForce RTX 5090, 32120MiB)"
+        gpu_match = re.search(r'CUDA:0 \(([^,]+),\s*(\d+)MiB\)', content)
+        if gpu_match:
+            gpu_name = gpu_match.group(1)
+            gpu_mib = int(gpu_match.group(2))
+            for k in metrics:
+                if metrics[k]["device"] == device:
+                    metrics[k]["gpu_name"] = gpu_name
+                    metrics[k]["gpu_total_gb"] = round(gpu_mib / 1024, 2)
+
+        # Parse AutoBatch: "Using batch-size 40 for CUDA:0 19.02G/31.37G (61%)"
+        # These appear in order matching the summary lines
+        autobatch_matches = list(re.finditer(
+            r'AutoBatch:.*Using batch-size \d+ for CUDA:0 ([\d.]+)G/([\d.]+)G \((\d+)%\)',
+            content
+        ))
+        summary_matches = list(re.finditer(
+            r'(YOLO\w+-?\w*)\s+summary:', content
+        ))
+        for sm, ab in zip(summary_matches, autobatch_matches):
+            model_key = sm.group(1)
+            if model_key in metrics:
+                metrics[model_key]["autobatch_mem_gb"] = float(ab.group(1))
+                metrics[model_key]["autobatch_pct"] = int(ab.group(3))
+
+        # Parse per-epoch GPU memory (first epoch line after each summary)
+        # Pattern: "1/1000      8.67G"
+        for sm in summary_matches:
+            model_key = sm.group(1)
+            # Find the first epoch line after this summary
+            after = content[sm.end():]
+            epoch_mem = re.search(r'\d+/\d+\s+([\d.]+)G\s+[\d.]+\s+[\d.]+\s+[\d.]+', after)
+            if epoch_mem and model_key in metrics:
+                metrics[model_key]["train_gpu_mem_gb"] = float(epoch_mem.group(1))
+
+    # Get model file sizes from weights/best.pt
+    for device_name, device_path in DEVICE_DIRS.items():
+        for weight_path in glob.glob(os.path.join(device_path, "*", "*", "train", "weights", "best.pt")):
+            # Extract model config from args.yaml
+            train_dir = os.path.dirname(os.path.dirname(weight_path))
+            args_path = os.path.join(train_dir, "args.yaml")
+            if os.path.exists(args_path):
+                with open(args_path, "r") as f:
+                    for line in f:
+                        if line.startswith("model:"):
+                            model_yaml = line.split(":")[1].strip()
+                            # Convert "yolo26n-seg.yaml" -> "YOLO26n-seg"
+                            model_key = model_yaml.replace(".yaml", "").replace("yolo", "YOLO")
+                            if model_key in metrics:
+                                size_mb = os.path.getsize(weight_path) / (1024 * 1024)
+                                metrics[model_key]["model_file_mb"] = round(size_mb, 1)
+                            break
+
+    result = list(metrics.values())
+    print(f"Found hardware metrics for {len(result)} model configs")
+    return result
+
+
+def build_html(training_models, inference_reports, train_reports, hw_metrics):
     train_json = json.dumps(training_models)
     infer_json = json.dumps(inference_reports)
     train_reports_json = json.dumps(train_reports)
+    hw_json = json.dumps(hw_metrics)
 
     # Count stats
     n_train = len(training_models)
@@ -380,6 +486,7 @@ def build_html(training_models, inference_reports, train_reports):
   <button class="tab-btn" data-tab="convergence">Convergence</button>
   <button class="tab-btn" data-tab="inference">Inference</button>
   <button class="tab-btn" data-tab="comparison">Head-to-Head</button>
+  <button class="tab-btn" data-tab="resources">Resources</button>
 </div>
 
 <!-- ============ OVERVIEW TAB ============ -->
@@ -487,12 +594,37 @@ def build_html(training_models, inference_reports, train_reports):
   </div>
 </div>
 
+<!-- ============ RESOURCES TAB ============ -->
+<div class="tab-content" id="tab-resources">
+  <div class="card">
+    <h2>Hardware &amp; Model Resources</h2>
+    <p style="color:#64748b;margin-bottom:16px">Model complexity, GPU memory usage during training, and file sizes</p>
+    <div class="table-wrap">
+      <table id="hwTable">
+        <thead><tr>
+          <th>Model</th><th>Device</th><th>Layers</th><th>Params</th><th>GFLOPs</th>
+          <th>GPU</th><th>Train GPU Mem</th><th>AutoBatch Mem</th><th>AutoBatch %</th>
+          <th>Weights (MB)</th>
+        </tr></thead>
+        <tbody id="hwTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="charts-grid">
+    <div class="chart-card"><h3>Parameters by Model</h3><canvas id="chartHwParams"></canvas></div>
+    <div class="chart-card"><h3>GFLOPs by Model</h3><canvas id="chartHwGflops"></canvas></div>
+    <div class="chart-card"><h3>Training GPU Memory (GB)</h3><canvas id="chartHwGpuMem"></canvas></div>
+    <div class="chart-card"><h3>Model File Size (MB)</h3><canvas id="chartHwFileSize"></canvas></div>
+  </div>
+</div>
+
 <p class="timestamp">Generated: <span id="genTime"></span></p>
 
 <script>
 const TRAIN_DATA = {train_json};
 const INFER_DATA = {infer_json};
 const TRAIN_REPORTS = {train_reports_json};
+const HW_DATA = {hw_json};
 
 const COLORS = [
   '#38bdf8','#f472b6','#34d399','#fb923c','#a78bfa',
@@ -969,6 +1101,136 @@ function renderComparison() {{
   }});
 }}
 
+// ---- RESOURCES ----
+function renderResources() {{
+  chartDefaults();
+  const data = HW_DATA;
+  const tbody = document.getElementById('hwTableBody');
+
+  function fmtParams(p) {{
+    if (p == null) return '-';
+    if (p >= 1e6) return (p / 1e6).toFixed(1) + 'M';
+    if (p >= 1e3) return (p / 1e3).toFixed(0) + 'K';
+    return p.toString();
+  }}
+
+  tbody.innerHTML = data.map(h => {{
+    return `<tr>
+      <td><strong>${{h.model_key}}</strong></td>
+      <td><span class="device-badge device-${{h.device}}">${{h.device}}</span></td>
+      <td>${{h.layers || '-'}}</td>
+      <td>${{fmtParams(h.params)}}</td>
+      <td>${{h.gflops || '-'}}</td>
+      <td>${{h.gpu_name || '-'}}</td>
+      <td>${{h.train_gpu_mem_gb ? h.train_gpu_mem_gb.toFixed(2) + ' GB' : '-'}}</td>
+      <td>${{h.autobatch_mem_gb ? h.autobatch_mem_gb.toFixed(1) + ' GB' : '-'}}</td>
+      <td>${{h.autobatch_pct ? h.autobatch_pct + '%' : '-'}}</td>
+      <td>${{h.model_file_mb ? h.model_file_mb.toFixed(1) : '-'}}</td>
+    </tr>`;
+  }}).join('');
+
+  if (data.length === 0) return;
+  const labels = data.map(h => h.model_key);
+
+  // Params chart
+  if (charts.hwParams) charts.hwParams.destroy();
+  charts.hwParams = new Chart(document.getElementById('chartHwParams'), {{
+    type: 'bar',
+    data: {{
+      labels,
+      datasets: [{{
+        label: 'Parameters (M)',
+        data: data.map(h => h.params ? h.params / 1e6 : 0),
+        backgroundColor: data.map((h, i) => getColor(i) + 'cc'),
+        borderColor: data.map((h, i) => getColor(i)),
+        borderWidth: 1, borderRadius: 4
+      }}]
+    }},
+    options: {{
+      responsive: true, plugins: {{ legend: {{ display: false }} }},
+      scales: {{
+        y: {{ title: {{ display: true, text: 'Parameters (millions)' }}, grid: {{ color: '#1e293b' }} }},
+        x: {{ grid: {{ display: false }} }}
+      }}
+    }}
+  }});
+
+  // GFLOPs chart
+  if (charts.hwGflops) charts.hwGflops.destroy();
+  charts.hwGflops = new Chart(document.getElementById('chartHwGflops'), {{
+    type: 'bar',
+    data: {{
+      labels,
+      datasets: [{{
+        label: 'GFLOPs',
+        data: data.map(h => h.gflops || 0),
+        backgroundColor: data.map((h, i) => getColor(i) + 'cc'),
+        borderColor: data.map((h, i) => getColor(i)),
+        borderWidth: 1, borderRadius: 4
+      }}]
+    }},
+    options: {{
+      responsive: true, plugins: {{ legend: {{ display: false }} }},
+      scales: {{
+        y: {{ title: {{ display: true, text: 'GFLOPs' }}, grid: {{ color: '#1e293b' }} }},
+        x: {{ grid: {{ display: false }} }}
+      }}
+    }}
+  }});
+
+  // GPU memory chart
+  if (charts.hwGpuMem) charts.hwGpuMem.destroy();
+  charts.hwGpuMem = new Chart(document.getElementById('chartHwGpuMem'), {{
+    type: 'bar',
+    data: {{
+      labels,
+      datasets: [{{
+        label: 'Training GPU Mem (GB)',
+        data: data.map(h => h.train_gpu_mem_gb || 0),
+        backgroundColor: '#f472b6aa',
+        borderColor: '#f472b6',
+        borderWidth: 1, borderRadius: 4
+      }}, {{
+        label: 'AutoBatch Allocated (GB)',
+        data: data.map(h => h.autobatch_mem_gb || 0),
+        backgroundColor: '#38bdf8aa',
+        borderColor: '#38bdf8',
+        borderWidth: 1, borderRadius: 4
+      }}]
+    }},
+    options: {{
+      responsive: true, plugins: {{ legend: {{ position: 'top' }} }},
+      scales: {{
+        y: {{ title: {{ display: true, text: 'GB' }}, grid: {{ color: '#1e293b' }} }},
+        x: {{ grid: {{ display: false }} }}
+      }}
+    }}
+  }});
+
+  // File size chart
+  if (charts.hwFileSize) charts.hwFileSize.destroy();
+  charts.hwFileSize = new Chart(document.getElementById('chartHwFileSize'), {{
+    type: 'bar',
+    data: {{
+      labels,
+      datasets: [{{
+        label: 'Weights (MB)',
+        data: data.map(h => h.model_file_mb || 0),
+        backgroundColor: data.map((h, i) => getColor(i) + 'cc'),
+        borderColor: data.map((h, i) => getColor(i)),
+        borderWidth: 1, borderRadius: 4
+      }}]
+    }},
+    options: {{
+      responsive: true, plugins: {{ legend: {{ display: false }} }},
+      scales: {{
+        y: {{ title: {{ display: true, text: 'MB' }}, grid: {{ color: '#1e293b' }} }},
+        x: {{ grid: {{ display: false }} }}
+      }}
+    }}
+  }});
+}}
+
 // ---- INIT ----
 renderOverview();
 buildTrainingFilters();
@@ -976,6 +1238,7 @@ renderTrainingCurves();
 renderConvergence();
 renderInference();
 renderComparison();
+renderResources();
 </script>
 </body>
 </html>"""
@@ -990,6 +1253,7 @@ if __name__ == "__main__":
     training_models = read_training_results()
     inference_reports = read_inference_reports()
     train_reports = read_train_reports()
+    hw_metrics = read_hardware_metrics()
 
     print(f"\nDevices found: {list(DEVICE_DIRS.keys())}")
     print(f"\nProcessed {len(training_models)} trained models:")
@@ -1000,5 +1264,12 @@ if __name__ == "__main__":
     print(f"\nProcessed {len(inference_reports)} inference reports")
     print(f"Processed {len(train_reports)} training reports")
 
-    build_html(training_models, inference_reports, train_reports)
+    if hw_metrics:
+        print(f"\nHardware metrics:")
+        for h in hw_metrics:
+            print(f"  {h['model_key']:20s} params={h['params']:>12,}  GFLOPs={h['gflops']:>6.1f}  "
+                  f"GPU mem={h.get('train_gpu_mem_gb', 0) or 0:.1f}G  "
+                  f"weights={h.get('model_file_mb', 0) or 0:.1f}MB")
+
+    build_html(training_models, inference_reports, train_reports, hw_metrics)
     print("\nDone!")
