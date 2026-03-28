@@ -6,3 +6,4 @@ logs/
 .old/
 __pycache__/
 *.pt
+docs/results_dashboard.html

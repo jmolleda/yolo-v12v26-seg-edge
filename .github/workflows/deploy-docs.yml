@@ -6,7 +6,6 @@ on:
     paths:
       - 'docs/**'
       - 'mkdocs.yml'
-      - 'results_dashboard.html'
       - '.github/workflows/deploy-docs.yml'
 
 permissions:
@@ -17,6 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -24,7 +25,14 @@ jobs:
 
       - run: pip install mkdocs mkdocs-material
 
-      - run: |
+      - name: Build and deploy docs
+        run: |
           echo 'site_url: https://jmolleda.github.io/yolo-v12v26-seg-edge/' >> mkdocs.yml
-          mkdocs gh-deploy --force
+          mkdocs build
 
+          # Preserve results_dashboard.html from gh-pages (autopush keeps it updated)
+          git show origin/gh-pages:results_dashboard.html > site/results_dashboard.html 2>/dev/null || true
+
+          # Deploy site dir to gh-pages
+          pip install ghp-import
+          ghp-import -n -p -f site
