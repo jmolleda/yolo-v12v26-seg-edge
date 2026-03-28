@@ -33,8 +33,7 @@ python run_rtx5090.py
 To keep the process running after closing an SSH session use `tmux`:
 
 ```bash
-tmux new -s bench
-python run_rtx5090.py   # Ctrl+B, then D to detach
+tmux new -s bench "python run_rtx5090.py 2>&1 | tee bench.log"
 ```
 
 ```bash

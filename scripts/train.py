@@ -74,8 +74,8 @@ def train_model(architecture, model_size, task, approach, experiment_name="core_
         from scripts.weighted_sampler import apply_weighted_sampling
         apply_weighted_sampling(get_data_yaml_path())
 
-    # Large model lr override to prevent NaN loss
-    if model_size == "large":
+    # Lower lr for models prone to NaN loss (attention-heavy or large capacity)
+    if model_size == "large" or (architecture == "yolo12" and model_size == "medium"):
         train_params["lr0"] = 0.0005
 
     # Results directory
