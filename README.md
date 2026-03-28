@@ -1,8 +1,8 @@
 # YOLO Benchmark Suite
 
-Benchmark framework for comparing YOLO model performance across GPU and edge devices, developed as part of a Master's thesis (TFM) at Universidad de Oviedo.
+Benchmark framework for comparing YOLO model performance across GPU and edge devices.
 
-The system evaluates **YOLOv26** and **YOLOv12** architectures on a weld inspection dataset (8 classes) across three hardware platforms (RTX 5090, Jetson Orin AGX, Jetson Orin Nano), measuring inference speed, accuracy, and power efficiency.
+The system evaluates **YOLOv12** and **YOLOv26** architectures on a steel surface defects and welds dataset (8 classes) across three hardware platforms (RTX 5090, Jetson AGX Orin, Jetson Orin Nano), measuring inference speed, accuracy, and power efficiency.
 
 ## Quick Start
 
@@ -26,9 +26,9 @@ Then open `http://localhost:8000` in your browser.
 ### Documentation contents
 
 - [Home](docs/index.md) — Project overview, structure, and metrics
-- [Experimental Design](docs/experiments.md) — Four experiments, 292 runs
+- [Experimental Design](docs/experiments.md) — Five experiments, 552 runs
 - [How to Run](docs/execution.md) — Per-device execution, resume, OOM protection
 - [Monitoring](docs/monitoring.md) — HTML dashboard, remote monitoring
 - [Hyperparameters](docs/hyperparameters.md) — Training parameters with Ultralytics defaults
 - [Environment](docs/environment.md) — Software versions per device
-- [TODO](docs/todo.md) — Dataset imbalance analysis and proposals
+- [Class Imbalance](docs/class_imbalance.md) — Dataset imbalance analysis and weighted sampling solution

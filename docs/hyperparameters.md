@@ -16,7 +16,7 @@ Detailed description of all training hyperparameters defined in `hiperparametros
 | Parameter | Value | Ultralytics default | Description |
 |-----------|-------|---------|-------------|
 | `optimizer` | **AdamW** | auto | Optimizer algorithm. AdamW adds proper weight decay to Adam, preventing overfitting better than standard Adam. |
-| `lr0` | **0.001** | 0.01 | Initial learning rate. Controls step size during gradient descent. Too high = unstable (NaN loss), too low = slow convergence. Large models use 0.0005 override. |
+| `lr0` | **0.001** | 0.01 | Initial learning rate. Controls step size during gradient descent. Too high = unstable (NaN loss), too low = slow convergence. Large models and yolo12 medium use 0.0005 override to prevent NaN loss from attention layer sensitivity. |
 | `cos_lr` | **True** | False | Cosine annealing: learning rate follows a cosine curve from `lr0` down to near zero. Starts fast, then fine-tunes gradually at the end. |
 | `weight_decay` | 0.0005 | 0.0005 | L2 regularization penalty. Discourages large weights, reducing overfitting. Applied correctly by AdamW (decoupled from gradient). |
 

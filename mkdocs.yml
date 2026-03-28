@@ -21,7 +21,7 @@ nav:
   - Monitoring: monitoring.md
   - Hyperparameters: hyperparameters.md
   - Environment: environment.md
-  - TODO: todo.md
+  - Class Imbalance: class_imbalance.md
 
 markdown_extensions:
   - tables

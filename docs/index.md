@@ -1,8 +1,8 @@
 # YOLO Benchmark Suite
 
-Benchmark framework for comparing YOLO model performance across GPU and edge devices, developed as part of a Master's thesis (TFM) at Universidad de Oviedo.
+Benchmark framework for comparing YOLO model performance across GPU and edge devices.
 
-The system evaluates **YOLOv26** and **YOLOv12** architectures on a weld inspection dataset (8 classes) across three hardware platforms, measuring inference speed, accuracy, and power efficiency.
+The system evaluates **YOLOv12** and **YOLOv26** architectures on a steel surface defects and welds dataset (8 classes) across three hardware platforms (RTX 5090, Jetson AGX Orin, Jetson Orin Nano), measuring inference speed, accuracy, and power efficiency.   
 
 ## Devices
 
