@@ -128,6 +128,21 @@ def train_model(architecture, model_size, task, approach, experiment_name="core_
         map50 = float(val_results.box.map50) if hasattr(val_results, "box") else 0.0
         map50_95 = float(val_results.box.map) if hasattr(val_results, "box") else 0.0
 
+        # Optimal confidence threshold (from F1-confidence curve)
+        best_conf = None
+        best_f1 = None
+        try:
+            box = val_results.box
+            if hasattr(box, 'f1') and box.f1 is not None:
+                import numpy as np
+                mean_f1 = box.f1.mean(0)
+                best_idx = int(mean_f1.argmax())
+                best_f1 = float(mean_f1[best_idx])
+                if hasattr(box, 'conf') and box.conf is not None:
+                    best_conf = float(box.conf[best_idx])
+        except Exception:
+            pass
+
         end_time = datetime.datetime.now()
         duration = end_time - start_time
 
@@ -154,6 +169,8 @@ def train_model(architecture, model_size, task, approach, experiment_name="core_
             "fps": fps,
             "map50": map50,
             "map50_95": map50_95,
+            "best_conf": best_conf,
+            "best_f1": best_f1,
             "watts": None,
             "hyperparams": train_params,
         }

@@ -143,6 +143,8 @@
           <th data-col="best_mAP50_95_B">mAP50-95(B)</th>
           <th data-col="best_precision_B">Precision</th>
           <th data-col="best_recall_B">Recall</th>
+          <th>F1</th>
+          <th>Conf</th>
         </tr></thead>
         <tbody id="trainTableBody"></tbody>
       </table>
@@ -151,6 +153,8 @@
   <div class="charts-grid">
     <div class="chart-card"><h3>mAP50-95 by Model</h3><canvas id="chartOverviewBar"></canvas></div>
     <div class="chart-card"><h3>Training Time vs Accuracy</h3><canvas id="chartTimeVsAcc"></canvas></div>
+    <div class="chart-card"><h3>Best F1 Score by Model</h3><canvas id="chartF1Bar"></canvas></div>
+    <div class="chart-card"><h3>Optimal Confidence Threshold</h3><canvas id="chartConfBar"></canvas></div>
   </div>
 </div>
 
@@ -337,13 +341,23 @@ function renderOverview() {
   const bestMap = models.length ? Math.max(...models.map(m => m.best_mAP50_95_B)) : 0;
   const tbody = document.getElementById('trainTableBody');
 
-  // Get batch from train reports
+  // Get batch, conf, f1 from train reports
   const batchMap = {};
-  TRAIN_REPORTS.forEach(r => { batchMap[r.name + '_' + r.experiment + '_' + r.device] = r.batch; });
+  const confMap = {};
+  const f1Map = {};
+  TRAIN_REPORTS.forEach(r => {
+    const key = r.name + '_' + r.experiment + '_' + r.device;
+    batchMap[key] = r.batch;
+    confMap[key] = r.best_conf;
+    f1Map[key] = r.best_f1;
+  });
 
   tbody.innerHTML = models.map(m => {
     const isBest = m.best_mAP50_95_B === bestMap;
-    const batch = batchMap[m.name + '_' + m.experiment + '_' + m.device] || '-';
+    const rkey = m.name + '_' + m.experiment + '_' + m.device;
+    const batch = batchMap[rkey] || '-';
+    const conf = confMap[rkey];
+    const f1 = f1Map[rkey];
     return `<tr class="${isBest ? 'best-row' : ''}">
       <td><span class="device-badge device-${m.device}">${m.device}</span></td>
       <td>${m.experiment}</td>
@@ -360,6 +374,8 @@ function renderOverview() {
       <td class="${isBest ? 'metric-highlight' : ''}">${fmtPct(m.best_mAP50_95_B)}</td>
       <td>${fmtPct(m.best_precision_B)}</td>
       <td>${fmtPct(m.best_recall_B)}</td>
+      <td>${f1 != null ? fmtPct(f1) : '-'}</td>
+      <td>${conf != null ? conf.toFixed(2) : '-'}</td>
     </tr>`;
   }).join('');
 
@@ -415,6 +431,47 @@ function renderOverview() {
         x: { title: { display: true, text: 'Training Time (hours)' }, grid: { color: '#1e293b' } },
         y: { title: { display: true, text: 'mAP50-95 (%)' }, grid: { color: '#1e293b' } }
       }
+    }
+  });
+
+  // F1 bar chart
+  const f1Labels = models.map(m => shortName(m));
+  const f1Values = models.map(m => {
+    const rkey = m.name + '_' + m.experiment + '_' + m.device;
+    const v = f1Map[rkey];
+    return v != null ? v * 100 : null;
+  });
+  if (charts.f1Bar) charts.f1Bar.destroy();
+  charts.f1Bar = new Chart(document.getElementById('chartF1Bar'), {
+    type: 'bar',
+    data: {
+      labels: f1Labels,
+      datasets: [{ label: 'F1 (%)', data: f1Values, backgroundColor: f1Labels.map((_, i) => getColor(i)) }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: false, grid: { color: '#1e293b' } } }
+    }
+  });
+
+  // Confidence threshold bar chart
+  const confLabels = models.map(m => shortName(m));
+  const confValues = models.map(m => {
+    const rkey = m.name + '_' + m.experiment + '_' + m.device;
+    return confMap[rkey] != null ? confMap[rkey] : null;
+  });
+  if (charts.confBar) charts.confBar.destroy();
+  charts.confBar = new Chart(document.getElementById('chartConfBar'), {
+    type: 'bar',
+    data: {
+      labels: confLabels,
+      datasets: [{ label: 'Conf threshold', data: confValues, backgroundColor: confLabels.map((_, i) => getColor(i)) }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: false, max: 1.0, grid: { color: '#1e293b' } } }
     }
   });
 }
