@@ -1,0 +1,33 @@
+name: Deploy docs to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'results_dashboard.html'
+      - '.github/workflows/deploy-docs.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install mkdocs mkdocs-material
+
+      - name: Copy dashboard into docs
+        run: |
+          if [ -f results_dashboard.html ]; then
+            cp results_dashboard.html docs/
+          fi
+
+      - run: mkdocs gh-deploy --force

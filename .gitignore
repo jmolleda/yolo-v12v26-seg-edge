@@ -1,7 +1,6 @@
 data/
 run_*/
 results/
-results_dashboard.html
 results-quick-test/
 logs/
 .old/
