@@ -247,6 +247,23 @@ def read_train_reports():
                     pass
                 data[key] = val
 
+        # Parse per-class accuracy section
+        per_class = {}
+        pc_match = re.search(r'--- Per-class Accuracy ---\n(.+?)(?:\n-{10,}|\Z)', content, re.DOTALL)
+        if pc_match:
+            lines = pc_match.group(1).strip().split('\n')
+            for line in lines[1:]:  # skip header
+                parts = line.split()
+                if len(parts) >= 5:
+                    per_class[parts[0]] = {
+                        "precision": float(parts[1]),
+                        "recall": float(parts[2]),
+                        "map50": float(parts[3]),
+                        "map50_95": float(parts[4]),
+                    }
+        if per_class:
+            data["per_class"] = per_class
+
         reports.append(data)
 
     return reports
@@ -360,9 +377,14 @@ def read_hardware_metrics():
             for item in json.load(f):
                 cached[item["model_key"]] = item
 
-    # New data takes precedence over cache
+    # Merge: cached non-None values are preserved; new data only fills gaps
     for key, val in metrics.items():
-        cached[key] = val
+        if key not in cached:
+            cached[key] = val
+        else:
+            for field, fval in val.items():
+                if cached[key].get(field) is None and fval is not None:
+                    cached[key][field] = fval
 
     # Save updated cache
     with open(cache_path, "w") as f:
@@ -504,6 +526,7 @@ def build_html(training_models, inference_reports, train_reports, hw_metrics):
   <button class="tab-btn" data-tab="convergence">Convergence</button>
   <button class="tab-btn" data-tab="inference">Inference</button>
   <button class="tab-btn" data-tab="comparison">Head-to-Head</button>
+  <button class="tab-btn" data-tab="perclass">Per-Class</button>
   <button class="tab-btn" data-tab="resources">Resources</button>
 </div>
 
@@ -613,6 +636,28 @@ def build_html(training_models, inference_reports, train_reports, hw_metrics):
     <div class="chart-card"><h3>YOLOv26 vs YOLOv12 &mdash; Best Epoch</h3><canvas id="chartH2H_epoch"></canvas></div>
     <div class="chart-card"><h3>Scratch vs Pretrained &mdash; mAP50-95</h3><canvas id="chartH2H_approach"></canvas></div>
     <div class="chart-card"><h3>AutoBatch Size by Model</h3><canvas id="chartH2H_batch"></canvas></div>
+  </div>
+</div>
+
+<!-- ============ PER-CLASS TAB ============ -->
+<div class="tab-content" id="tab-perclass">
+  <div class="card">
+    <h2>Per-Class Accuracy</h2>
+    <p>Per-class mAP50 and mAP50-95 for each trained model. Sorted by class frequency (most to least common).</p>
+    <div id="perclassFilters" style="margin-bottom: 12px;"></div>
+    <div class="table-wrap">
+      <table id="perclassTable">
+        <thead><tr>
+          <th>Model</th><th>Device</th>
+          <th id="pcClassHeaders"></th>
+        </tr></thead>
+        <tbody id="perclassTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="charts-grid">
+    <div class="chart-card"><h3>mAP50 by Class</h3><canvas id="chartPerClassMap50"></canvas></div>
+    <div class="chart-card"><h3>mAP50-95 by Class</h3><canvas id="chartPerClassMap5095"></canvas></div>
   </div>
 </div>
 
@@ -1186,6 +1231,98 @@ function renderComparison() {{
   }});
 }}
 
+// ---- PER-CLASS ----
+function renderPerClass() {{
+  chartDefaults();
+  // Collect models that have per_class data
+  const modelsWithPC = TRAIN_REPORTS.filter(r => r.per_class);
+  if (modelsWithPC.length === 0) {{
+    document.getElementById('perclassTableBody').innerHTML =
+      '<tr><td colspan="10" style="text-align:center;color:#94a3b8;">No per-class data available yet. Run extract_conf.py after benchmark completes.</td></tr>';
+    return;
+  }}
+
+  // Class order by frequency (most to least common in the dataset)
+  const classOrder = ['Solda','IV-2','IV-1B','IV-4','IV-1A','IV-3','IV-6','IV-5'];
+  // Get actual classes from data
+  const allClasses = new Set();
+  modelsWithPC.forEach(r => Object.keys(r.per_class).forEach(c => allClasses.add(c)));
+  const classes = classOrder.filter(c => allClasses.has(c));
+  if (classes.length === 0) {{
+    // Use whatever classes exist
+    allClasses.forEach(c => classes.push(c));
+  }}
+
+  // Build table header
+  const headerRow = document.getElementById('perclassTable').querySelector('thead tr');
+  headerRow.innerHTML = '<th>Model</th><th>Device</th>' +
+    classes.map(c => `<th colspan="2">${{c}}</th>`).join('');
+  // Sub-header
+  const subHeader = document.createElement('tr');
+  subHeader.innerHTML = '<th></th><th></th>' +
+    classes.map(() => '<th style="font-size:0.7rem;color:#94a3b8;">mAP50</th><th style="font-size:0.7rem;color:#94a3b8;">50-95</th>').join('');
+  headerRow.after(subHeader);
+
+  // Build table body
+  const tbody = document.getElementById('perclassTableBody');
+  tbody.innerHTML = modelsWithPC.map(r => {{
+    const label = r.arch.replace('yolo','Y').toUpperCase() + '-' + r.size[0].toUpperCase() +
+      (r.approach.includes('balanced') ? '(B)' : r.approach === 'pretrained' ? '(P)' : '');
+    const cells = classes.map(c => {{
+      const cm = r.per_class[c];
+      if (!cm) return '<td>-</td><td>-</td>';
+      return `<td>${{(cm.map50 * 100).toFixed(1)}}</td><td>${{(cm.map50_95 * 100).toFixed(1)}}</td>`;
+    }}).join('');
+    return `<tr>
+      <td><span class="arch-badge arch-${{r.arch}}">${{label}}</span></td>
+      <td><span class="device-badge device-${{r.device}}">${{r.device}}</span></td>
+      ${{cells}}
+    </tr>`;
+  }}).join('');
+
+  // Grouped bar chart: mAP50 by class
+  const modelLabels = modelsWithPC.map(r => {{
+    return r.arch.replace('yolo','Y').toUpperCase() + '-' + r.size[0].toUpperCase() +
+      (r.approach.includes('balanced') ? '(B)' : r.approach === 'pretrained' ? '(P)' : '');
+  }});
+
+  if (charts.pcMap50) charts.pcMap50.destroy();
+  charts.pcMap50 = new Chart(document.getElementById('chartPerClassMap50'), {{
+    type: 'bar',
+    data: {{
+      labels: classes,
+      datasets: modelsWithPC.map((r, i) => ({{
+        label: modelLabels[i],
+        data: classes.map(c => r.per_class[c] ? r.per_class[c].map50 * 100 : null),
+        backgroundColor: getColor(i),
+      }}))
+    }},
+    options: {{
+      responsive: true,
+      plugins: {{ legend: {{ position: 'top' }} }},
+      scales: {{ y: {{ beginAtZero: true, title: {{ display: true, text: 'mAP50 (%)' }}, grid: {{ color: '#1e293b' }} }} }}
+    }}
+  }});
+
+  if (charts.pcMap5095) charts.pcMap5095.destroy();
+  charts.pcMap5095 = new Chart(document.getElementById('chartPerClassMap5095'), {{
+    type: 'bar',
+    data: {{
+      labels: classes,
+      datasets: modelsWithPC.map((r, i) => ({{
+        label: modelLabels[i],
+        data: classes.map(c => r.per_class[c] ? r.per_class[c].map50_95 * 100 : null),
+        backgroundColor: getColor(i),
+      }}))
+    }},
+    options: {{
+      responsive: true,
+      plugins: {{ legend: {{ position: 'top' }} }},
+      scales: {{ y: {{ beginAtZero: true, title: {{ display: true, text: 'mAP50-95 (%)' }}, grid: {{ color: '#1e293b' }} }} }}
+    }}
+  }});
+}}
+
 // ---- RESOURCES ----
 function renderResources() {{
   chartDefaults();
@@ -1323,6 +1460,7 @@ renderTrainingCurves();
 renderConvergence();
 renderInference();
 renderComparison();
+renderPerClass();
 renderResources();
 </script>
 </body>
@@ -1339,6 +1477,7 @@ if __name__ == "__main__":
     training_models = read_training_results()
     inference_reports = read_inference_reports()
     train_reports = read_train_reports()
+
     hw_metrics = read_hardware_metrics()
 
     print(f"\nDevices found: {list(DEVICE_DIRS.keys())}")

@@ -143,6 +143,25 @@ def train_model(architecture, model_size, task, approach, experiment_name="core_
         except Exception:
             pass
 
+        # Per-class metrics
+        per_class_data = None
+        precision_mean = 0.0
+        recall_mean = 0.0
+        if hasattr(val_results, "box") and hasattr(val_results.box, "class_result"):
+            class_names = val_results.names if hasattr(val_results, "names") else {}
+            p_cls, r_cls, map50_cls, map50_95_cls = val_results.box.class_result
+            per_class_data = {}
+            for idx in range(len(p_cls)):
+                name = class_names.get(idx, f"class_{idx}")
+                per_class_data[name] = {
+                    "precision": float(p_cls[idx]),
+                    "recall": float(r_cls[idx]),
+                    "map50": float(map50_cls[idx]),
+                    "map50_95": float(map50_95_cls[idx]),
+                }
+            precision_mean = float(sum(p_cls) / len(p_cls)) if len(p_cls) > 0 else 0.0
+            recall_mean = float(sum(r_cls) / len(r_cls)) if len(r_cls) > 0 else 0.0
+
         end_time = datetime.datetime.now()
         duration = end_time - start_time
 
@@ -169,8 +188,11 @@ def train_model(architecture, model_size, task, approach, experiment_name="core_
             "fps": fps,
             "map50": map50,
             "map50_95": map50_95,
+            "precision": precision_mean,
+            "recall": recall_mean,
             "best_conf": best_conf,
             "best_f1": best_f1,
+            "per_class": per_class_data,
             "watts": None,
             "hyperparams": train_params,
         }

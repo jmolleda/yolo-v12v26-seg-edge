@@ -100,7 +100,27 @@ def extract_optimal_conf():
             print(f"  Box: F1={box_f1:.4f} @ conf={box_conf:.4f}" if box_f1 else "  Box: N/A")
             print(f"  Mask: F1={mask_f1:.4f} @ conf={mask_conf:.4f}" if mask_f1 else "  Mask: N/A")
 
-            # Append to report.txt if not already present
+            # Extract per-class metrics
+            per_class_data = None
+            precision_mean = 0.0
+            recall_mean = 0.0
+            if hasattr(metrics, "box") and hasattr(metrics.box, "class_result"):
+                class_names = metrics.names if hasattr(metrics, "names") else {}
+                p_cls, r_cls, map50_cls, map50_95_cls = metrics.box.class_result
+                per_class_data = {}
+                for idx in range(len(p_cls)):
+                    name = class_names.get(idx, f"class_{idx}")
+                    per_class_data[name] = {
+                        "precision": float(p_cls[idx]),
+                        "recall": float(r_cls[idx]),
+                        "map50": float(map50_cls[idx]),
+                        "map50_95": float(map50_95_cls[idx]),
+                    }
+                precision_mean = float(sum(p_cls) / len(p_cls)) if len(p_cls) > 0 else 0.0
+                recall_mean = float(sum(r_cls) / len(r_cls)) if len(r_cls) > 0 else 0.0
+                print(f"  Per-class: {len(per_class_data)} classes")
+
+            # Update report.txt with missing metrics
             report_path = os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(wf))),
                 "report.txt"
@@ -108,12 +128,49 @@ def extract_optimal_conf():
             if os.path.exists(report_path):
                 with open(report_path, "r") as f:
                     content = f.read()
+
+                updated = False
+                # Update P/R mean if still zero
+                if "P (mean):  0.0000" in content:
+                    content = content.replace(
+                        "P (mean):  0.0000",
+                        f"P (mean):  {precision_mean:.4f}"
+                    )
+                    content = content.replace(
+                        "R (mean):  0.0000",
+                        f"R (mean):  {recall_mean:.4f}"
+                    )
+                    updated = True
+
+                # Add conf/F1 if missing
                 if "Best conf:" not in content:
-                    with open(report_path, "a") as f:
-                        if box_conf is not None:
-                            f.write(f"Best conf: {box_conf:.4f}\n")
-                        if box_f1 is not None:
-                            f.write(f"Best F1:   {box_f1:.4f}\n")
+                    lines = content.rstrip().split("\n")
+                    if box_conf is not None:
+                        lines.append(f"Best conf: {box_conf:.4f}")
+                    if box_f1 is not None:
+                        lines.append(f"Best F1:   {box_f1:.4f}")
+                    content = "\n".join(lines) + "\n"
+                    updated = True
+
+                # Add per-class section if missing
+                if per_class_data and "Per-class Accuracy" not in content:
+                    lines = content.rstrip().split("\n")
+                    lines.append("-" * 50)
+                    lines.append("--- Per-class Accuracy ---")
+                    lines.append(f"{'Class':10s}  {'P':>8s}  {'R':>8s}  {'mAP50':>8s}  {'mAP50-95':>8s}")
+                    for cls_name, cm in per_class_data.items():
+                        lines.append(
+                            f"{cls_name:10s}  {cm['precision']:8.4f}  "
+                            f"{cm['recall']:8.4f}  "
+                            f"{cm['map50']:8.4f}  "
+                            f"{cm['map50_95']:8.4f}"
+                        )
+                    content = "\n".join(lines) + "\n"
+                    updated = True
+
+                if updated:
+                    with open(report_path, "w") as f:
+                        f.write(content)
                     print(f"  Updated {report_path}")
 
         except Exception as e:
