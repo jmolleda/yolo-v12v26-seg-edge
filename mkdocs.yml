@@ -1,8 +1,8 @@
 site_name: YOLO Benchmark Suite
 site_description: Benchmark framework for comparing YOLO model performance across GPU and edge devices
-site_url: https://jmolleda.github.io/tfm-icm/
-repo_url: https://github.com/jmolleda/tfm-icm
-repo_name: jmolleda/tfm-icm
+site_url: https://jmolleda.github.io/yolo-v12v26-seg-edge/
+repo_url: https://github.com/jmolleda/yolo-v12v26-seg-edge
+repo_name: jmolleda/yolo-v12v26-seg-edge
 
 theme:
   name: material
