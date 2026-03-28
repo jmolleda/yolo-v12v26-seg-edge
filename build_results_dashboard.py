@@ -477,7 +477,7 @@ def build_html(training_models, inference_reports, train_reports, hw_metrics):
 </head>
 <body>
 
-<h1>YOLO Weld Inspection &mdash; Benchmark Results</h1>
+<h1>YOLO Weld Defect Segmentation &mdash; Benchmark Results</h1>
 <p class="subtitle">{n_devices} device(s) &bull; {n_train} trained &bull; {n_infer} inference runs</p>
 
 <div class="tabs">
