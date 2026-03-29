@@ -61,20 +61,22 @@ def get_data_yaml_path():
     return os.path.join(PROJECT_ROOT, "data", "data.yaml")
 
 
-def get_model_config(architecture, task, model_size):
-    """Return the Ultralytics built-in model config string.
+def get_model_config(architecture, task, model_size, pretrained=False):
+    """Return the Ultralytics model config string.
 
     Args:
         architecture: 'yolo26' or 'yolo12'
         task: 'segment' or 'detect'
         model_size: 'nano', 'small', 'medium', 'large'
+        pretrained: If True, return .pt (pretrained weights) instead of .yaml (random init).
 
     Returns:
-        Built-in model string like 'yolo26n-seg.yaml' or 'yolo12s.yaml'
+        Built-in model string like 'yolo26n-seg.pt' or 'yolo12s.yaml'
     """
     size_key = {"nano": "n", "small": "s", "medium": "m", "large": "l"}[model_size]
     task_suffix = "-seg" if task == "segment" else ""
-    return f"{architecture}{size_key}{task_suffix}.yaml"
+    ext = ".pt" if pretrained else ".yaml"
+    return f"{architecture}{size_key}{task_suffix}{ext}"
 
 
 # Overridable results directory name (default: "results", quick-test: "results-quick-test")

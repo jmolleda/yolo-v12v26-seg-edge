@@ -42,7 +42,8 @@ def train_model(architecture, model_size, task, approach, experiment_name="core_
     """
     start_time = datetime.datetime.now()
     machine_name = get_machine_name()
-    model_config = get_model_config(architecture, task, model_size)
+    is_pretrained = "pretrained" in approach
+    model_config = get_model_config(architecture, task, model_size, pretrained=is_pretrained)
 
     print("=" * 60)
     print(f"TRAINING: {architecture} {model_size} | {task} | {approach}")
@@ -149,7 +150,8 @@ def train_model(architecture, model_size, task, approach, experiment_name="core_
         recall_mean = 0.0
         if hasattr(val_results, "box") and hasattr(val_results.box, "class_result"):
             class_names = val_results.names if hasattr(val_results, "names") else {}
-            p_cls, r_cls, map50_cls, map50_95_cls = val_results.box.class_result
+            cr = val_results.box.class_result
+            p_cls, r_cls, map50_cls, map50_95_cls = cr() if callable(cr) else cr
             per_class_data = {}
             for idx in range(len(p_cls)):
                 name = class_names.get(idx, f"class_{idx}")

@@ -106,7 +106,8 @@ def extract_optimal_conf():
             recall_mean = 0.0
             if hasattr(metrics, "box") and hasattr(metrics.box, "class_result"):
                 class_names = metrics.names if hasattr(metrics, "names") else {}
-                p_cls, r_cls, map50_cls, map50_95_cls = metrics.box.class_result
+                cr = metrics.box.class_result
+                p_cls, r_cls, map50_cls, map50_95_cls = cr() if callable(cr) else cr
                 per_class_data = {}
                 for idx in range(len(p_cls)):
                     name = class_names.get(idx, f"class_{idx}")
