@@ -10,6 +10,7 @@ INTERVAL=${1:-600}
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 WORKTREE_DIR=$(mktemp -d)
 DASHBOARD_FILE="$REPO_DIR/docs/results_dashboard.html"
+LAST_HASH=""
 
 cleanup() {
     echo "[$(date '+%H:%M:%S')] Cleaning up worktree..."
@@ -41,17 +42,17 @@ while true; do
         continue
     fi
 
-    # Copy to gh-pages worktree
-    cp "$DASHBOARD_FILE" "$WORKTREE_DIR/results_dashboard.html"
-    cd "$WORKTREE_DIR"
-
-    # Only commit+push if content changed
-    if git diff --quiet results_dashboard.html 2>/dev/null; then
-        echo "[$(date '+%H:%M:%S')] No changes, skipping push"
+    # Check if source data changed (file list + sizes of all result CSVs and reports)
+    CURRENT_FINGERPRINT=$(find "$REPO_DIR"/run_rtx5090/results -name "results.csv" -o -name "report.txt" 2>/dev/null | sort | xargs ls -l 2>/dev/null | md5sum)
+    if [ "$CURRENT_FINGERPRINT" = "$LAST_HASH" ]; then
+        echo "[$(date '+%H:%M:%S')] No new data, skipping push"
     else
+        cp "$DASHBOARD_FILE" "$WORKTREE_DIR/results_dashboard.html"
+        cd "$WORKTREE_DIR"
         git add results_dashboard.html
         git commit -m "Auto-update results dashboard [$(date '+%Y-%m-%d %H:%M')]"
         git push origin gh-pages
+        LAST_HASH="$CURRENT_FINGERPRINT"
         echo "[$(date '+%H:%M:%S')] Pushed update to gh-pages"
     fi
 
