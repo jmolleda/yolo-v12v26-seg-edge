@@ -72,10 +72,18 @@ def get_model_config(architecture, task, model_size, pretrained=False):
 
     Returns:
         Built-in model string like 'yolo26n-seg.pt' or 'yolo12s.yaml'
+
+    Notes:
+        yolo12 segmentation pretrained weights (yolo12n-seg.pt etc.) do not exist
+        in Ultralytics hub. For yolo12 pretrained segmentation, use detection weights
+        (yolo12n.pt) instead — Ultralytics adapts them for segmentation during training.
     """
     size_key = {"nano": "n", "small": "s", "medium": "m", "large": "l"}[model_size]
     task_suffix = "-seg" if task == "segment" else ""
     ext = ".pt" if pretrained else ".yaml"
+    # yolo12 has no pretrained segmentation weights; use detection .pt as backbone
+    if pretrained and architecture == "yolo12" and task == "segment":
+        return f"{architecture}{size_key}{ext}"
     return f"{architecture}{size_key}{task_suffix}{ext}"
 
 
