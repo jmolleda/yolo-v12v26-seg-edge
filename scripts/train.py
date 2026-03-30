@@ -151,8 +151,8 @@ def train_model(architecture, model_size, task, approach, experiment_name="core_
         if hasattr(val_results, "box") and hasattr(val_results.box, "ap_class_index"):
             class_names = val_results.names if hasattr(val_results, "names") else {}
             box = val_results.box
-            p_cls        = box.p[:-1] if hasattr(box, "p") else []
-            r_cls        = box.r[:-1] if hasattr(box, "r") else []
+            p_cls        = box.p if hasattr(box, "p") else []
+            r_cls        = box.r if hasattr(box, "r") else []
             map50_cls    = box.ap50   if hasattr(box, "ap50") else []
             map50_95_cls = box.ap     if hasattr(box, "ap") else []
             ap_class_index = box.ap_class_index if hasattr(box, "ap_class_index") else range(len(map50_cls))
