@@ -43,7 +43,13 @@ while true; do
     fi
 
     # Check if any completed run reports changed (report.txt only — results.csv changes every epoch)
-    CURRENT_FINGERPRINT=$(find "$REPO_DIR"/run_rtx5090/results -name "report.txt" 2>/dev/null | sort | xargs ls -l 2>/dev/null | md5sum)
+    REPORT_FILES=$(find "$REPO_DIR"/run_rtx5090/results -name "report.txt" 2>/dev/null)
+    if [ -z "$REPORT_FILES" ]; then
+        echo "[$(date '+%H:%M:%S')] No completed runs yet, skipping push"
+        sleep "$INTERVAL"
+        continue
+    fi
+    CURRENT_FINGERPRINT=$(echo "$REPORT_FILES" | sort | xargs ls -l 2>/dev/null | md5sum)
     if [ "$CURRENT_FINGERPRINT" = "$LAST_HASH" ]; then
         echo "[$(date '+%H:%M:%S')] No new data, skipping push"
     else
