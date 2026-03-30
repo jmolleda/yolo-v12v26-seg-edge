@@ -148,25 +148,32 @@ def train_model(architecture, model_size, task, approach, experiment_name="core_
         per_class_data = None
         precision_mean = 0.0
         recall_mean = 0.0
-        if hasattr(val_results, "box") and hasattr(val_results.box, "ap_class_index"):
-            class_names = val_results.names if hasattr(val_results, "names") else {}
+        try:
             box = val_results.box
-            p_cls        = box.p if hasattr(box, "p") else []
-            r_cls        = box.r if hasattr(box, "r") else []
-            map50_cls    = box.ap50   if hasattr(box, "ap50") else []
-            map50_95_cls = box.ap     if hasattr(box, "ap") else []
-            ap_class_index = box.ap_class_index if hasattr(box, "ap_class_index") else range(len(map50_cls))
+            class_names = val_results.names if hasattr(val_results, "names") else {}
+            ap_class_index = box.ap_class_index  # classes present in val set
+            ap50         = box.ap50              # shape: (nc_present,)
+            ap           = box.ap                # shape: (nc_present,)
+            # p and r are indexed by class id, not by position in ap_class_index
+            p_all = box.p                        # shape: (nc,) or (nc_present,)
+            r_all = box.r                        # shape: (nc,) or (nc_present,)
             per_class_data = {}
             for i, cls_id in enumerate(ap_class_index):
-                name = class_names.get(int(cls_id), f"class_{cls_id}")
+                cls_id = int(cls_id)
+                name = class_names.get(cls_id, f"class_{cls_id}")
+                # p/r may be indexed by cls_id (all classes) or by i (present only)
+                p_val = float(p_all[cls_id]) if cls_id < len(p_all) else float(p_all[i])
+                r_val = float(r_all[cls_id]) if cls_id < len(r_all) else float(r_all[i])
                 per_class_data[name] = {
-                    "precision": float(p_cls[i]),
-                    "recall": float(r_cls[i]),
-                    "map50": float(map50_cls[i]),
-                    "map50_95": float(map50_95_cls[i]),
+                    "precision": p_val,
+                    "recall":    r_val,
+                    "map50":     float(ap50[i]),
+                    "map50_95":  float(ap[i]),
                 }
-            precision_mean = float(sum(p_cls) / len(p_cls)) if len(p_cls) > 0 else 0.0
-            recall_mean = float(sum(r_cls) / len(r_cls)) if len(r_cls) > 0 else 0.0
+            precision_mean = float(box.mp) if hasattr(box, "mp") else 0.0
+            recall_mean    = float(box.mr) if hasattr(box, "mr") else 0.0
+        except Exception as e:
+            print(f"Warning: could not extract per-class metrics: {e}")
 
         end_time = datetime.datetime.now()
         duration = end_time - start_time

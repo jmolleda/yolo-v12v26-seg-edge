@@ -141,23 +141,28 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
         gpu_mem_peak_mb = torch.cuda.max_memory_allocated() / (1024 * 1024)
 
     # Extract per-class metrics from the last run
-    if hasattr(val_results, "box") and hasattr(val_results.box, "ap_class_index"):
-        class_names = val_results.names if hasattr(val_results, "names") else {}
+    try:
         box = val_results.box
-        p_cls        = box.p if hasattr(box, "p") else []
-        r_cls        = box.r if hasattr(box, "r") else []
-        map50_cls    = box.ap50   if hasattr(box, "ap50") else []
-        map50_95_cls = box.ap     if hasattr(box, "ap") else []
-        ap_class_index = box.ap_class_index if hasattr(box, "ap_class_index") else range(len(map50_cls))
+        class_names = val_results.names if hasattr(val_results, "names") else {}
+        ap_class_index = box.ap_class_index
+        ap50  = box.ap50
+        ap    = box.ap
+        p_all = box.p
+        r_all = box.r
         per_class_data = {}
         for i, cls_id in enumerate(ap_class_index):
-            name = class_names.get(int(cls_id), f"class_{cls_id}")
+            cls_id = int(cls_id)
+            name = class_names.get(cls_id, f"class_{cls_id}")
+            p_val = float(p_all[cls_id]) if cls_id < len(p_all) else float(p_all[i])
+            r_val = float(r_all[cls_id]) if cls_id < len(r_all) else float(r_all[i])
             per_class_data[name] = {
-                "precision": float(p_cls[i]),
-                "recall": float(r_cls[i]),
-                "map50": float(map50_cls[i]),
-                "map50_95": float(map50_95_cls[i]),
+                "precision": p_val,
+                "recall":    r_val,
+                "map50":     float(ap50[i]),
+                "map50_95":  float(ap[i]),
             }
+    except Exception as e:
+        print(f"Warning: could not extract per-class metrics: {e}")
 
     # Compute averages
     t_pre = statistics.mean(all_pre)
