@@ -640,15 +640,16 @@
 <h4 id="background-execution-ssh">Background Execution (SSH)</h4>
 <p>To keep the process running after closing an SSH session use <code>tmux</code>.
 Run the benchmark and the dashboard autopush in <strong>separate sessions</strong> so restarting the benchmark doesn't kill autopush:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>tmux<span class="w"> </span>kill-session<span class="w"> </span>-t<span class="w"> </span>bench<span class="w">    </span><span class="m">2</span>&gt;/dev/null<span class="p">;</span><span class="w"> </span>tmux<span class="w"> </span>new-session<span class="w"> </span>-s<span class="w"> </span>bench<span class="w">    </span><span class="s2">&quot;python run_rtx5090.py 2&gt;&amp;1 | tee -a bench.log&quot;</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>tmux<span class="w"> </span>kill-session<span class="w"> </span>-t<span class="w"> </span>autopush<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="p">;</span><span class="w"> </span>tmux<span class="w"> </span>new-session<span class="w"> </span>-s<span class="w"> </span>autopush<span class="w"> </span><span class="s2">&quot;bash scripts/autopush_dashboard.sh&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>tmux<span class="w"> </span>new-session<span class="w"> </span>-s<span class="w"> </span>bench<span class="w">    </span><span class="s2">&quot;python run_rtx5090.py 2&gt;&amp;1 | tee -a bench.log&quot;</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>tmux<span class="w"> </span>new-session<span class="w"> </span>-s<span class="w"> </span>autopush<span class="w"> </span><span class="s2">&quot;bash scripts/autopush_dashboard.sh&quot;</span>
 </code></pre></div>
 <p>Reattach later:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>tmux<span class="w"> </span>attach<span class="w"> </span>-t<span class="w"> </span>bench
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>tmux<span class="w"> </span>attach<span class="w"> </span>-t<span class="w"> </span>autopush
 </code></pre></div>
-<p>To restart the benchmark only (autopush keeps running):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>tmux<span class="w"> </span>kill-session<span class="w"> </span>-t<span class="w"> </span>bench<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="p">;</span><span class="w"> </span>tmux<span class="w"> </span>new-session<span class="w"> </span>-s<span class="w"> </span>bench<span class="w"> </span><span class="s2">&quot;python run_rtx5090.py 2&gt;&amp;1 | tee -a bench.log&quot;</span>
+<p>Stop:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>tmux<span class="w"> </span>kill-session<span class="w"> </span>-t<span class="w"> </span>bench<span class="w">    </span><span class="m">2</span>&gt;/dev/null
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>tmux<span class="w"> </span>kill-session<span class="w"> </span>-t<span class="w"> </span>autopush<span class="w"> </span><span class="m">2</span>&gt;/dev/null
 </code></pre></div>
 <p>Or if you prefer a simpler approach:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>nohup<span class="w"> </span>python<span class="w"> </span>run_rtx5090.py<span class="w"> </span>&gt;<span class="w"> </span>bench.log<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">&amp;</span>
