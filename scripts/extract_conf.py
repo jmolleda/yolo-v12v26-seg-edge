@@ -104,18 +104,22 @@ def extract_optimal_conf():
             per_class_data = None
             precision_mean = 0.0
             recall_mean = 0.0
-            if hasattr(metrics, "box") and hasattr(metrics.box, "class_result"):
+            if hasattr(metrics, "box") and hasattr(metrics.box, "ap_class_index"):
                 class_names = metrics.names if hasattr(metrics, "names") else {}
-                cr = metrics.box.class_result
-                p_cls, r_cls, map50_cls, map50_95_cls = cr() if callable(cr) else cr
+                box = metrics.box
+                p_cls        = box.p[:-1] if hasattr(box, "p") else []
+                r_cls        = box.r[:-1] if hasattr(box, "r") else []
+                map50_cls    = box.ap50   if hasattr(box, "ap50") else []
+                map50_95_cls = box.ap     if hasattr(box, "ap") else []
+                ap_class_index = box.ap_class_index if hasattr(box, "ap_class_index") else range(len(map50_cls))
                 per_class_data = {}
-                for idx in range(len(p_cls)):
-                    name = class_names.get(idx, f"class_{idx}")
+                for i, cls_id in enumerate(ap_class_index):
+                    name = class_names.get(int(cls_id), f"class_{cls_id}")
                     per_class_data[name] = {
-                        "precision": float(p_cls[idx]),
-                        "recall": float(r_cls[idx]),
-                        "map50": float(map50_cls[idx]),
-                        "map50_95": float(map50_95_cls[idx]),
+                        "precision": float(p_cls[i]),
+                        "recall": float(r_cls[i]),
+                        "map50": float(map50_cls[i]),
+                        "map50_95": float(map50_95_cls[i]),
                     }
                 precision_mean = float(sum(p_cls) / len(p_cls)) if len(p_cls) > 0 else 0.0
                 recall_mean = float(sum(r_cls) / len(r_cls)) if len(r_cls) > 0 else 0.0
