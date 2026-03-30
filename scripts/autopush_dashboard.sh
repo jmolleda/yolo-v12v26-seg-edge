@@ -42,8 +42,8 @@ while true; do
         continue
     fi
 
-    # Check if source data changed (file list + sizes of all result CSVs and reports)
-    CURRENT_FINGERPRINT=$(find "$REPO_DIR"/run_rtx5090/results -name "results.csv" -o -name "report.txt" 2>/dev/null | sort | xargs ls -l 2>/dev/null | md5sum)
+    # Check if any completed run reports changed (report.txt only — results.csv changes every epoch)
+    CURRENT_FINGERPRINT=$(find "$REPO_DIR"/run_rtx5090/results -name "report.txt" 2>/dev/null | sort | xargs ls -l 2>/dev/null | md5sum)
     if [ "$CURRENT_FINGERPRINT" = "$LAST_HASH" ]; then
         echo "[$(date '+%H:%M:%S')] No new data, skipping push"
     else
