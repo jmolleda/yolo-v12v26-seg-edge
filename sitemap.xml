@@ -2,34 +2,34 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://jmolleda.github.io/yolo-v12v26-seg-edge/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-03-30</lastmod>
     </url>
     <url>
          <loc>https://jmolleda.github.io/yolo-v12v26-seg-edge/class_imbalance/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-03-30</lastmod>
     </url>
     <url>
          <loc>https://jmolleda.github.io/yolo-v12v26-seg-edge/dashboard/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-03-30</lastmod>
     </url>
     <url>
          <loc>https://jmolleda.github.io/yolo-v12v26-seg-edge/environment/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-03-30</lastmod>
     </url>
     <url>
          <loc>https://jmolleda.github.io/yolo-v12v26-seg-edge/execution/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-03-30</lastmod>
     </url>
     <url>
          <loc>https://jmolleda.github.io/yolo-v12v26-seg-edge/experiments/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-03-30</lastmod>
     </url>
     <url>
          <loc>https://jmolleda.github.io/yolo-v12v26-seg-edge/hyperparameters/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-03-30</lastmod>
     </url>
     <url>
          <loc>https://jmolleda.github.io/yolo-v12v26-seg-edge/monitoring/</loc>
-         <lastmod>2026-03-28</lastmod>
+         <lastmod>2026-03-30</lastmod>
     </url>
 </urlset>
