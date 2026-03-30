@@ -34,8 +34,8 @@ To keep the process running after closing an SSH session use `tmux`.
 Run the benchmark and the dashboard autopush in **separate sessions** so restarting the benchmark doesn't kill autopush:
 
 ```bash
-tmux kill-session -t bench    2>/dev/null; tmux new-session -s bench    "python run_rtx5090.py 2>&1 | tee -a bench.log"
-tmux kill-session -t autopush 2>/dev/null; tmux new-session -s autopush "bash scripts/autopush_dashboard.sh"
+tmux new-session -s bench    "python run_rtx5090.py 2>&1 | tee -a bench.log"
+tmux new-session -s autopush "bash scripts/autopush_dashboard.sh"
 ```
 
 Reattach later:
@@ -45,10 +45,11 @@ tmux attach -t bench
 tmux attach -t autopush
 ```
 
-To restart the benchmark only (autopush keeps running):
+Stop:
 
 ```bash
-tmux kill-session -t bench 2>/dev/null; tmux new-session -s bench "python run_rtx5090.py 2>&1 | tee -a bench.log"
+tmux kill-session -t bench    2>/dev/null
+tmux kill-session -t autopush 2>/dev/null
 ```
 
 Or if you prefer a simpler approach:
