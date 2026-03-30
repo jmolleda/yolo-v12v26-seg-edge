@@ -144,22 +144,15 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
     try:
         box = val_results.box
         class_names = val_results.names if hasattr(val_results, "names") else {}
-        ap_class_index = box.ap_class_index
-        ap50  = box.ap50
-        ap    = box.ap
-        p_all = box.p
-        r_all = box.r
         per_class_data = {}
-        for i, cls_id in enumerate(ap_class_index):
-            cls_id = int(cls_id)
-            name = class_names.get(cls_id, f"class_{cls_id}")
-            p_val = float(p_all[cls_id]) if cls_id < len(p_all) else float(p_all[i])
-            r_val = float(r_all[cls_id]) if cls_id < len(r_all) else float(r_all[i])
+        for i, cls_id in enumerate(box.ap_class_index):
+            name = class_names.get(int(cls_id), f"class_{cls_id}")
+            p, r, ap50, ap = box.class_result(i)
             per_class_data[name] = {
-                "precision": p_val,
-                "recall":    r_val,
-                "map50":     float(ap50[i]),
-                "map50_95":  float(ap[i]),
+                "precision": float(p),
+                "recall":    float(r),
+                "map50":     float(ap50),
+                "map50_95":  float(ap),
             }
     except Exception as e:
         print(f"Warning: could not extract per-class metrics: {e}")

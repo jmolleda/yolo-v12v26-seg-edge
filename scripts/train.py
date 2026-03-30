@@ -151,27 +151,18 @@ def train_model(architecture, model_size, task, approach, experiment_name="core_
         try:
             box = val_results.box
             class_names = val_results.names if hasattr(val_results, "names") else {}
-            ap_class_index = box.ap_class_index  # classes present in val set
-            ap50         = box.ap50              # shape: (nc_present,)
-            ap           = box.ap                # shape: (nc_present,)
-            # p and r are indexed by class id, not by position in ap_class_index
-            p_all = box.p                        # shape: (nc,) or (nc_present,)
-            r_all = box.r                        # shape: (nc,) or (nc_present,)
             per_class_data = {}
-            for i, cls_id in enumerate(ap_class_index):
-                cls_id = int(cls_id)
-                name = class_names.get(cls_id, f"class_{cls_id}")
-                # p/r may be indexed by cls_id (all classes) or by i (present only)
-                p_val = float(p_all[cls_id]) if cls_id < len(p_all) else float(p_all[i])
-                r_val = float(r_all[cls_id]) if cls_id < len(r_all) else float(r_all[i])
+            for i, cls_id in enumerate(box.ap_class_index):
+                name = class_names.get(int(cls_id), f"class_{cls_id}")
+                p, r, ap50, ap = box.class_result(i)
                 per_class_data[name] = {
-                    "precision": p_val,
-                    "recall":    r_val,
-                    "map50":     float(ap50[i]),
-                    "map50_95":  float(ap[i]),
+                    "precision": float(p),
+                    "recall":    float(r),
+                    "map50":     float(ap50),
+                    "map50_95":  float(ap),
                 }
-            precision_mean = float(box.mp) if hasattr(box, "mp") else 0.0
-            recall_mean    = float(box.mr) if hasattr(box, "mr") else 0.0
+            precision_mean = float(box.mp)
+            recall_mean    = float(box.mr)
         except Exception as e:
             print(f"Warning: could not extract per-class metrics: {e}")
 
