@@ -16,18 +16,15 @@ import re
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_HTML = os.path.join(BASE_DIR, "docs", "results_dashboard.html")
 
-# Auto-discover run_*/ folders with results
+# Auto-discover device folders inside results/
+# Layout: results/{device}/{experiment}/{model}/
 DEVICE_DIRS = {}
-for entry in sorted(os.listdir(BASE_DIR)):
-    if entry.startswith("run_") and os.path.isdir(os.path.join(BASE_DIR, entry)):
-        results_path = os.path.join(BASE_DIR, entry, "results")
-        if os.path.isdir(results_path):
-            device_name = entry.replace("run_", "")
-            # Look for the actual device subfolder inside results/
-            for sub in os.listdir(results_path):
-                sub_path = os.path.join(results_path, sub)
-                if os.path.isdir(sub_path):
-                    DEVICE_DIRS[sub] = sub_path
+top_results = os.path.join(BASE_DIR, "results")
+if os.path.isdir(top_results):
+    for sub in sorted(os.listdir(top_results)):
+        sub_path = os.path.join(top_results, sub)
+        if os.path.isdir(sub_path):
+            DEVICE_DIRS[sub] = sub_path
 
 
 def parse_model_name(folder_name):
