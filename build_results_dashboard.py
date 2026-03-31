@@ -41,6 +41,8 @@ def read_training_results():
     """Read all training results.csv files across all devices."""
     models = []
     csv_files = []
+    done_runs = load_done_train_runs()
+
     for device, device_path in DEVICE_DIRS.items():
         pattern = os.path.join(device_path, "*", "*", "train", "results.csv")
         for f in sorted(glob.glob(pattern)):
@@ -51,6 +53,14 @@ def read_training_results():
         model_folder = os.path.basename(os.path.dirname(os.path.dirname(csv_path)))
         experiment = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(csv_path))))
         arch, task_key, size, approach = parse_model_name(model_folder)
+
+        # Skip runs not yet marked done in the status JSON.
+        if device in done_runs:
+            full_task = _TASK_EXPAND.get(task_key, task_key)
+            run_key = (experiment, arch, full_task, size, approach)
+            if run_key not in done_runs[device]:
+                print(f"  Skipping incomplete run: {model_folder} ({device})")
+                continue
 
         rows = []
         with open(csv_path, "r") as f:
