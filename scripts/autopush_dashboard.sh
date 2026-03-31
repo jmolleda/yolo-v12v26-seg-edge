@@ -43,7 +43,7 @@ while true; do
     fi
 
     # Check if any completed run reports changed (report.txt only — results.csv changes every epoch)
-    REPORT_FILES=$(find "$REPO_DIR"/run_rtx5090/results -name "report.txt" 2>/dev/null)
+    REPORT_FILES=$(find "$REPO_DIR"/results -name "report.txt" 2>/dev/null)
     if [ -z "$REPORT_FILES" ]; then
         echo "[$(date '+%H:%M:%S')] No completed runs yet, skipping push"
         sleep "$INTERVAL"
