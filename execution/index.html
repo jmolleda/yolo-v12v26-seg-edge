@@ -445,6 +445,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Jetson Devices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#background-execution-ssh_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background Execution (SSH)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -640,7 +657,7 @@
 <h4 id="background-execution-ssh">Background Execution (SSH)</h4>
 <p>To keep the process running after closing an SSH session use <code>tmux</code>.
 Run the benchmark and the dashboard autopush in <strong>separate sessions</strong> so restarting the benchmark doesn't kill autopush:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>tmux<span class="w"> </span>new-session<span class="w"> </span>-s<span class="w"> </span>bench<span class="w">    </span><span class="s2">&quot;python run_rtx5090.py 2&gt;&amp;1 | tee -a bench.log&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>tmux<span class="w"> </span>new-session<span class="w"> </span>-s<span class="w"> </span>bench<span class="w">    </span><span class="s2">&quot;python run_rtx5090.py 2&gt;&amp;1 | tee -a logs/rtx5090_stdout.log&quot;</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>tmux<span class="w"> </span>new-session<span class="w"> </span>-s<span class="w"> </span>autopush<span class="w"> </span><span class="s2">&quot;bash scripts/autopush_dashboard.sh&quot;</span>
 </code></pre></div>
 <p>Reattach later:</p>
@@ -652,11 +669,11 @@ Run the benchmark and the dashboard autopush in <strong>separate sessions</stron
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>tmux<span class="w"> </span>kill-session<span class="w"> </span>-t<span class="w"> </span>autopush<span class="w"> </span><span class="m">2</span>&gt;/dev/null
 </code></pre></div>
 <p>Or if you prefer a simpler approach:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>nohup<span class="w"> </span>python<span class="w"> </span>run_rtx5090.py<span class="w"> </span>&gt;<span class="w"> </span>bench.log<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">&amp;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>nohup<span class="w"> </span>python<span class="w"> </span>run_rtx5090.py<span class="w"> </span>&gt;<span class="w"> </span>logs/rtx5090_stdout.log<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">&amp;</span>
 </code></pre></div>
 <p>Monitor progress:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>bench.log<span class="w">          </span><span class="c1"># Console output</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>tail<span class="w"> </span>-f<span class="w"> </span>logs/rtx5090.log<span class="w">   </span><span class="c1"># Orchestrator log</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>logs/rtx5090_stdout.log<span class="w">  </span><span class="c1"># Console output</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>tail<span class="w"> </span>-f<span class="w"> </span>logs/rtx5090.log<span class="w">         </span><span class="c1"># Orchestrator log</span>
 </code></pre></div>
 <h3 id="jetson-devices">Jetson Devices</h3>
 <p>Three automated phases: (1) copy trained weights from RTX 5090, (2) export to TensorRT, (3) run inference.</p>
@@ -667,6 +684,32 @@ Run the benchmark and the dashboard autopush in <strong>separate sessions</stron
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>python<span class="w"> </span>run_jetson_agx.py
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>python<span class="w"> </span>run_jetson_nano.py
 </code></pre></div>
+<h4 id="background-execution-ssh_1">Background Execution (SSH)</h4>
+<p>Run the benchmark and the dashboard autopush in <strong>separate sessions</strong> so restarting the benchmark doesn't kill autopush:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Jetson AGX Orin</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>tmux<span class="w"> </span>new-session<span class="w"> </span>-s<span class="w"> </span>bench<span class="w">    </span><span class="s2">&quot;python run_jetson_agx.py 2&gt;&amp;1 | tee -a logs/jetson_agx_stdout.log&quot;</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>tmux<span class="w"> </span>new-session<span class="w"> </span>-s<span class="w"> </span>autopush<span class="w"> </span><span class="s2">&quot;bash scripts/autopush_dashboard.sh&quot;</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="c1"># Jetson Orin Nano</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>tmux<span class="w"> </span>new-session<span class="w"> </span>-s<span class="w"> </span>bench<span class="w">    </span><span class="s2">&quot;python run_jetson_nano.py 2&gt;&amp;1 | tee -a logs/jetson_nano_stdout.log&quot;</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>tmux<span class="w"> </span>new-session<span class="w"> </span>-s<span class="w"> </span>autopush<span class="w"> </span><span class="s2">&quot;bash scripts/autopush_dashboard.sh&quot;</span>
+</code></pre></div>
+<p>Reattach later:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>tmux<span class="w"> </span>attach<span class="w"> </span>-t<span class="w"> </span>bench
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>tmux<span class="w"> </span>attach<span class="w"> </span>-t<span class="w"> </span>autopush
+</code></pre></div>
+<p>Stop:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>tmux<span class="w"> </span>kill-session<span class="w"> </span>-t<span class="w"> </span>bench<span class="w">    </span><span class="m">2</span>&gt;/dev/null
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>tmux<span class="w"> </span>kill-session<span class="w"> </span>-t<span class="w"> </span>autopush<span class="w"> </span><span class="m">2</span>&gt;/dev/null
+</code></pre></div>
+<p>Or with nohup:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>nohup<span class="w"> </span>python<span class="w"> </span>run_jetson_agx.py<span class="w">  </span>&gt;<span class="w"> </span>logs/jetson_agx_stdout.log<span class="w">  </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">&amp;</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>nohup<span class="w"> </span>python<span class="w"> </span>run_jetson_nano.py<span class="w"> </span>&gt;<span class="w"> </span>logs/jetson_nano_stdout.log<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">&amp;</span>
+</code></pre></div>
+<p>Monitor progress:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>logs/jetson_agx_stdout.log<span class="w">   </span><span class="c1"># Console output</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>tail<span class="w"> </span>-f<span class="w"> </span>logs/jetson_agx.log<span class="w">          </span><span class="c1"># Orchestrator log</span>
+</code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">TensorRT engines are GPU-architecture specific</p>
 <p>They cannot be built on the RTX 5090 and copied over. The orchestrator scripts
@@ -676,9 +719,9 @@ No manual export step is needed.</p>
 </div>
 <h2 id="quick-test-smoke-test">Quick Test (Smoke Test)</h2>
 <p>Verify the full pipeline works before launching the real benchmark:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>python<span class="w"> </span>run_rtx5090.py<span class="w"> </span>--quick-test
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>python<span class="w"> </span>run_jetson_agx.py<span class="w"> </span>--quick-test
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>python<span class="w"> </span>run_jetson_nano.py<span class="w"> </span>--quick-test
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>python<span class="w"> </span>run_rtx5090.py<span class="w"> </span>--quick-test
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>python<span class="w"> </span>run_jetson_agx.py<span class="w"> </span>--quick-test
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>python<span class="w"> </span>run_jetson_nano.py<span class="w"> </span>--quick-test
 </code></pre></div>
 <table>
 <thead>
