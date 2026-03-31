@@ -32,4 +32,8 @@
          <loc>https://jmolleda.github.io/yolo-v12v26-seg-edge/monitoring/</loc>
          <lastmod>2026-03-31</lastmod>
     </url>
+    <url>
+         <loc>https://jmolleda.github.io/yolo-v12v26-seg-edge/orchestrator/</loc>
+         <lastmod>2026-03-31</lastmod>
+    </url>
 </urlset>

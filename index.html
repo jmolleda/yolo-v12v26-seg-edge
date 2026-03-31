@@ -336,6 +336,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#results-aggregation" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -641,25 +652,48 @@
 <h2 id="project-structure">Project Structure</h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>BenchMarks/
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── config/
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│   └── experiments.yaml          # Declarative experiment definitions
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│   └── experiments.yaml              # Declarative experiment matrix
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>├── scripts/
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│   ├── utils.py                  # Config loading, path resolution, report saving
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│   ├── train.py                  # Generic training (both architectures/tasks/approaches)
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│   ├── infer.py                  # Inference benchmark with warm-up + measurement
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│   ├── export.py                 # TensorRT export (FP16/INT8)
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│   ├── aggregate.py              # Collect reports into CSV
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│   └── benchmark_logger.py       # HTML dashboard + JSON status logging
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>├── run_rtx5090.py                # RTX 5090 orchestrator (train → export → infer → aggregate)
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>├── run_jetson_agx.py             # Jetson AGX orchestrator (export → infer → aggregate)
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>├── run_jetson_nano.py            # Jetson Nano orchestrator (export → infer → aggregate + OOM protection)
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>├── hyperparameters.yaml          # Shared training hyperparameters
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>├── mkdocs.yml                    # MkDocs documentation config
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>├── data/
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│   └── data.yaml                 # Dataset config (8 weld inspection classes)
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>├── docs/                         # Project documentation (MkDocs)
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>├── results/                      # Generated results (gitignored)
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>└── logs/                         # Dashboard HTML + JSON status (gitignored)
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│   ├── utils.py                      # Config loading, path resolution, report saving
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│   ├── train.py                      # Generic YOLO training script
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│   ├── infer.py                      # Inference benchmark (warm-up + measurement)
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│   ├── export.py                     # TensorRT export (FP16 / INT8)
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│   ├── aggregate.py                  # Collect all report*.txt into a summary CSV
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│   ├── benchmark_logger.py           # JSON status + live HTML dashboard logging
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│   ├── weighted_sampler.py           # Class-balanced sampling for balanced approaches
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│   └── autopush_dashboard.sh         # Auto-rebuild and push dashboard to gh-pages
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>├── run_rtx5090.py                    # RTX 5090 orchestrator (train → export → infer → aggregate)
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>├── run_jetson_agx.py                 # Jetson AGX orchestrator (export → infer → aggregate)
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>├── run_jetson_nano.py                # Jetson Nano orchestrator (export → infer → aggregate + OOM protection)
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>├── build_results_dashboard.py        # Build self-contained HTML results dashboard
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>├── hyperparameters.yaml              # Shared training hyperparameters
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>├── hw_metrics_cache.json             # Cached hardware metrics (params, GFLOPs, GPU memory)
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>├── mkdocs.yml                        # MkDocs documentation config
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>├── data/
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>│   ├── data.yaml                     # Dataset config (8 weld inspection classes)
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>│   └── {train,valid,test}/           # Images, labels, polygons
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>├── docs/                             # Project documentation (MkDocs source)
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>├── logs/                             # Runtime logs — gitignored
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>│   ├── {device}_stdout.log           # Full stdout (tee&#39;d from orchestrator)
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>│   ├── {device}.log                  # Structured orchestrator log
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>│   ├── {device}_status.json          # Live run status (phase, counters, per-run state)
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>│   └── {device}_dashboard.html       # Live local dashboard
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>└── results/                          # Benchmark outputs — gitignored
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>    └── {device}/{experiment}/{model}/
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>        ├── report.txt                # Training report (metrics + timing)
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>        ├── report_{fmt}_{prec}_img{sz}_b{bs}.txt  # Inference report
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>        ├── train/results.csv         # Per-epoch training curve
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>        └── train/weights/best.pt     # Best model weights
 </code></pre></div>
+<h2 id="documentation">Documentation</h2>
+<ul>
+<li><a href="execution/">Execution</a> — how to run the benchmark on each device</li>
+<li><a href="orchestrator/">Orchestrator Pipeline</a> — phase-by-phase pseudocode for each orchestrator</li>
+<li><a href="experiments/">Experiments</a> — experiment matrix definition</li>
+<li><a href="hyperparameters/">Hyperparameters</a> — training hyperparameter reference</li>
+<li><a href="monitoring/">Monitoring</a> — live dashboard and logging</li>
+<li><a href="environment/">Environment</a> — software versions and hardware setup</li>
+</ul>
 <h2 id="results-aggregation">Results Aggregation</h2>
 <p>After all runs complete, each orchestrator collects report files into a single CSV:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>results/{device}/benchmark_results.csv
