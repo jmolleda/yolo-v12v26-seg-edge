@@ -34,7 +34,7 @@ To keep the process running after closing an SSH session use `tmux`.
 Run the benchmark and the dashboard autopush in **separate sessions** so restarting the benchmark doesn't kill autopush:
 
 ```bash
-tmux new-session -s bench    "python run_rtx5090.py 2>&1 | tee -a bench.log"
+tmux new-session -s bench    "python run_rtx5090.py 2>&1 | tee -a logs/rtx5090_stdout.log"
 tmux new-session -s autopush "bash scripts/autopush_dashboard.sh"
 ```
 
@@ -55,14 +55,14 @@ tmux kill-session -t autopush 2>/dev/null
 Or if you prefer a simpler approach:
 
 ```bash
-nohup python run_rtx5090.py > bench.log 2>&1 &
+nohup python run_rtx5090.py > logs/rtx5090_stdout.log 2>&1 &
 ```
 
 Monitor progress:
 
 ```bash
-tail -f bench.log          # Console output
-tail -f logs/rtx5090.log   # Orchestrator log
+tail -f logs/rtx5090_stdout.log  # Console output
+tail -f logs/rtx5090.log         # Orchestrator log
 ```
 
 ### Jetson Devices
@@ -76,6 +76,48 @@ scp -r user@rtx-host:/path/to/results/rtx5090/ results/rtx5090/
 # 2-3. The orchestrator handles TensorRT export + inference automatically
 python run_jetson_agx.py
 python run_jetson_nano.py
+```
+
+#### Background Execution (SSH)
+
+Run the benchmark and the dashboard autopush in **separate sessions** so restarting the benchmark doesn't kill autopush:
+
+```bash
+# Jetson AGX Orin
+tmux new-session -s bench    "python run_jetson_agx.py 2>&1 | tee -a logs/jetson_agx_stdout.log"
+tmux new-session -s autopush "bash scripts/autopush_dashboard.sh"
+
+# Jetson Orin Nano
+tmux new-session -s bench    "python run_jetson_nano.py 2>&1 | tee -a logs/jetson_nano_stdout.log"
+tmux new-session -s autopush "bash scripts/autopush_dashboard.sh"
+```
+
+Reattach later:
+
+```bash
+tmux attach -t bench
+tmux attach -t autopush
+```
+
+Stop:
+
+```bash
+tmux kill-session -t bench    2>/dev/null
+tmux kill-session -t autopush 2>/dev/null
+```
+
+Or with nohup:
+
+```bash
+nohup python run_jetson_agx.py  > logs/jetson_agx_stdout.log  2>&1 &
+nohup python run_jetson_nano.py > logs/jetson_nano_stdout.log 2>&1 &
+```
+
+Monitor progress:
+
+```bash
+tail -f logs/jetson_agx_stdout.log   # Console output
+tail -f logs/jetson_agx.log          # Orchestrator log
 ```
 
 !!! warning "TensorRT engines are GPU-architecture specific"

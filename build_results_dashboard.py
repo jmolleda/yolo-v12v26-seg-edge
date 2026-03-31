@@ -267,7 +267,7 @@ def read_train_reports():
 
 
 def read_hardware_metrics():
-    """Parse bench.log and train folders for hardware/model metrics.
+    """Parse logs/{device}_stdout.log and train folders for hardware/model metrics.
 
     Extracts per-model: parameters, GFLOPs, layers, GPU memory usage,
     AutoBatch memory, model file size from weights/best.pt.
@@ -275,13 +275,16 @@ def read_hardware_metrics():
     """
     metrics = {}
 
-    for entry in sorted(os.listdir(BASE_DIR)):
-        if not entry.startswith("run_") or not os.path.isdir(os.path.join(BASE_DIR, entry)):
-            continue
-        device = entry.replace("run_", "")
-        log_path = os.path.join(BASE_DIR, entry, "bench.log")
-        if not os.path.exists(log_path):
-            continue
+    # Collect stdout log paths: logs/{device}_stdout.log
+    bench_logs = []
+    logs_dir = os.path.join(BASE_DIR, "logs")
+    if os.path.isdir(logs_dir):
+        for fname in sorted(os.listdir(logs_dir)):
+            if fname.endswith("_stdout.log"):
+                device = fname.replace("_stdout.log", "")
+                bench_logs.append((device, os.path.join(logs_dir, fname)))
+
+    for device, log_path in bench_logs:
 
         # Strip ANSI escape codes for easier parsing
         with open(log_path, "r", errors="replace") as f:
@@ -366,7 +369,7 @@ def read_hardware_metrics():
                                 metrics[model_key]["model_file_mb"] = round(size_mb, 1)
                             break
 
-    # Merge with cached metrics (preserves data from previous bench.log runs)
+    # Merge with cached metrics (preserves data from previous runs)
     cache_path = os.path.join(BASE_DIR, "hw_metrics_cache.json")
     cached = {}
     if os.path.exists(cache_path):
