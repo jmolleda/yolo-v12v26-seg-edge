@@ -55,6 +55,9 @@ while true; do
     else
         cp "$DASHBOARD_FILE" "$WORKTREE_DIR/results_dashboard.html"
         cd "$WORKTREE_DIR"
+        git fetch origin gh-pages
+        git reset --hard origin/gh-pages
+        cp "$DASHBOARD_FILE" "$WORKTREE_DIR/results_dashboard.html"
         git add results_dashboard.html
         git commit -m "Auto-update results dashboard [$(date '+%Y-%m-%d %H:%M')]"
         git push origin gh-pages
