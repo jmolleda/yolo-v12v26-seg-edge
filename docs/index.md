@@ -74,15 +74,6 @@ BenchMarks/
         └── train/weights/best.pt     # Best model weights
 ```
 
-## Documentation
-
-- [Execution](execution.md) — how to run the benchmark on each device
-- [Orchestrator Pipeline](orchestrator.md) — phase-by-phase pseudocode for each orchestrator
-- [Experiments](experiments.md) — experiment matrix definition
-- [Hyperparameters](hyperparameters.md) — training hyperparameter reference
-- [Monitoring](monitoring.md) — live dashboard and logging
-- [Environment](environment.md) — software versions and hardware setup
-
 ## Results Aggregation
 
 After all runs complete, each orchestrator collects report files into a single CSV:

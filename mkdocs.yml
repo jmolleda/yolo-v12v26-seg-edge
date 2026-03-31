@@ -21,6 +21,7 @@ nav:
   - Experimental Design: experiments.md
   - Results Dashboard: dashboard.md
   - How to Run: execution.md
+  - Orchestrator Pipeline: orchestrator.md
   - Monitoring: monitoring.md
   - Hyperparameters: hyperparameters.md
   - Environment: environment.md
