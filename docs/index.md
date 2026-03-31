@@ -40,25 +40,48 @@ Each inference run measures:
 ```
 BenchMarks/
 ├── config/
-│   └── experiments.yaml          # Declarative experiment definitions
+│   └── experiments.yaml              # Declarative experiment matrix
 ├── scripts/
-│   ├── utils.py                  # Config loading, path resolution, report saving
-│   ├── train.py                  # Generic training (both architectures/tasks/approaches)
-│   ├── infer.py                  # Inference benchmark with warm-up + measurement
-│   ├── export.py                 # TensorRT export (FP16/INT8)
-│   ├── aggregate.py              # Collect reports into CSV
-│   └── benchmark_logger.py       # HTML dashboard + JSON status logging
-├── run_rtx5090.py                # RTX 5090 orchestrator (train → export → infer → aggregate)
-├── run_jetson_agx.py             # Jetson AGX orchestrator (export → infer → aggregate)
-├── run_jetson_nano.py            # Jetson Nano orchestrator (export → infer → aggregate + OOM protection)
-├── hyperparameters.yaml          # Shared training hyperparameters
-├── mkdocs.yml                    # MkDocs documentation config
+│   ├── utils.py                      # Config loading, path resolution, report saving
+│   ├── train.py                      # Generic YOLO training script
+│   ├── infer.py                      # Inference benchmark (warm-up + measurement)
+│   ├── export.py                     # TensorRT export (FP16 / INT8)
+│   ├── aggregate.py                  # Collect all report*.txt into a summary CSV
+│   ├── benchmark_logger.py           # JSON status + live HTML dashboard logging
+│   ├── weighted_sampler.py           # Class-balanced sampling for balanced approaches
+│   └── autopush_dashboard.sh         # Auto-rebuild and push dashboard to gh-pages
+├── run_rtx5090.py                    # RTX 5090 orchestrator (train → export → infer → aggregate)
+├── run_jetson_agx.py                 # Jetson AGX orchestrator (export → infer → aggregate)
+├── run_jetson_nano.py                # Jetson Nano orchestrator (export → infer → aggregate + OOM protection)
+├── build_results_dashboard.py        # Build self-contained HTML results dashboard
+├── hyperparameters.yaml              # Shared training hyperparameters
+├── hw_metrics_cache.json             # Cached hardware metrics (params, GFLOPs, GPU memory)
+├── mkdocs.yml                        # MkDocs documentation config
 ├── data/
-│   └── data.yaml                 # Dataset config (8 weld inspection classes)
-├── docs/                         # Project documentation (MkDocs)
-├── results/                      # Generated results (gitignored)
-└── logs/                         # Dashboard HTML + JSON status (gitignored)
+│   ├── data.yaml                     # Dataset config (8 weld inspection classes)
+│   └── {train,valid,test}/           # Images, labels, polygons
+├── docs/                             # Project documentation (MkDocs source)
+├── logs/                             # Runtime logs — gitignored
+│   ├── {device}_stdout.log           # Full stdout (tee'd from orchestrator)
+│   ├── {device}.log                  # Structured orchestrator log
+│   ├── {device}_status.json          # Live run status (phase, counters, per-run state)
+│   └── {device}_dashboard.html       # Live local dashboard
+└── results/                          # Benchmark outputs — gitignored
+    └── {device}/{experiment}/{model}/
+        ├── report.txt                # Training report (metrics + timing)
+        ├── report_{fmt}_{prec}_img{sz}_b{bs}.txt  # Inference report
+        ├── train/results.csv         # Per-epoch training curve
+        └── train/weights/best.pt     # Best model weights
 ```
+
+## Documentation
+
+- [Execution](execution.md) — how to run the benchmark on each device
+- [Orchestrator Pipeline](orchestrator.md) — phase-by-phase pseudocode for each orchestrator
+- [Experiments](experiments.md) — experiment matrix definition
+- [Hyperparameters](hyperparameters.md) — training hyperparameter reference
+- [Monitoring](monitoring.md) — live dashboard and logging
+- [Environment](environment.md) — software versions and hardware setup
 
 ## Results Aggregation
 
