@@ -196,10 +196,54 @@ def read_inference_reports():
     return reports
 
 
+def load_done_train_runs():
+    """Return completed training run keys per device from logs/{device}_status.json.
+
+    Returns dict: {device: set of (experiment, architecture, task, model_size, approach)}
+    If no status JSON exists for a device yet (e.g. benchmark not started),
+    the device is absent from the dict and the caller shows all its reports.
+    """
+    done = {}
+    logs_dir = os.path.join(BASE_DIR, "logs")
+    if not os.path.isdir(logs_dir):
+        return done
+    for fname in sorted(os.listdir(logs_dir)):
+        if not fname.endswith("_status.json"):
+            continue
+        device = fname.replace("_status.json", "")
+        try:
+            with open(os.path.join(logs_dir, fname)) as f:
+                data = json.load(f)
+        except Exception:
+            continue
+        done_keys = set()
+        for run in data.get("runs", []):
+            if run.get("category") == "train" and run.get("status") == "done":
+                done_keys.add((
+                    run.get("experiment", ""),
+                    run.get("architecture", ""),
+                    run.get("task", ""),
+                    run.get("model_size", ""),
+                    run.get("approach", ""),
+                ))
+        done[device] = done_keys
+    return done
+
+
+# Map short task keys (used in folder names) to full task names (used in status JSON)
+_TASK_EXPAND = {"seg": "segment", "detect": "detect"}
+
+
 def read_train_reports():
-    """Read training report.txt files (one per training run) across all devices."""
+    """Read training report.txt files (one per training run) across all devices.
+
+    Reports for runs that are still in-progress (not 'done' in the status JSON)
+    are skipped to avoid showing partial results in the dashboard.
+    """
     reports = []
     report_files = []
+    done_runs = load_done_train_runs()
+
     for device, device_path in DEVICE_DIRS.items():
         pattern = os.path.join(device_path, "*", "*", "report.txt")
         for f in sorted(glob.glob(pattern)):
@@ -210,6 +254,15 @@ def read_train_reports():
         model_folder = os.path.basename(os.path.dirname(rpath))
         experiment = os.path.basename(os.path.dirname(os.path.dirname(rpath)))
         arch, task_key, size, approach = parse_model_name(model_folder)
+
+        # Skip reports for runs not yet marked done in the status JSON.
+        # Fallback: if no status JSON exists for a device yet, show all its reports.
+        if device in done_runs:
+            full_task = _TASK_EXPAND.get(task_key, task_key)
+            run_key = (experiment, arch, full_task, size, approach)
+            if run_key not in done_runs[device]:
+                print(f"  Skipping incomplete run: {model_folder} ({device})")
+                continue
 
         data = {
             "name": model_folder,
