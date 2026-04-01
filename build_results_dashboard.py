@@ -48,8 +48,17 @@ def read_training_results():
     csv_files = []
 
     for device, device_path in DEVICE_DIRS.items():
-        pattern = os.path.join(device_path, "*", "*", "train", "results.csv")
+        # Match train/ and train2/, train3/ etc. — Ultralytics increments the folder
+        # name on rerun. Pick the latest one per model folder.
+        pattern = os.path.join(device_path, "*", "*", "train*", "results.csv")
+        seen_models = {}
         for f in sorted(glob.glob(pattern)):
+            model_dir = os.path.dirname(os.path.dirname(f))
+            train_dir = os.path.basename(os.path.dirname(f))
+            # Keep the highest-numbered train folder (train < train2 < train3 lexically)
+            if model_dir not in seen_models or train_dir > os.path.basename(os.path.dirname(seen_models[model_dir])):
+                seen_models[model_dir] = f
+        for f in seen_models.values():
             csv_files.append((device, f))
     print(f"Found {len(csv_files)} training result files")
 
@@ -368,9 +377,16 @@ def read_hardware_metrics():
             if epoch_mem and model_key in metrics:
                 metrics[model_key]["train_gpu_mem_gb"] = float(epoch_mem.group(1))
 
-    # Get model file sizes from weights/best.pt
+    # Get model file sizes from weights/best.pt.
+    # Use train*/ glob and pick the latest folder in case Ultralytics incremented it.
     for device_name, device_path in DEVICE_DIRS.items():
-        for weight_path in glob.glob(os.path.join(device_path, "*", "*", "train", "weights", "best.pt")):
+        seen_model_dirs = {}
+        for weight_path in glob.glob(os.path.join(device_path, "*", "*", "train*", "weights", "best.pt")):
+            model_dir = os.path.dirname(os.path.dirname(os.path.dirname(weight_path)))
+            train_dir_name = os.path.basename(os.path.dirname(os.path.dirname(weight_path)))
+            if model_dir not in seen_model_dirs or train_dir_name > os.path.basename(os.path.dirname(os.path.dirname(seen_model_dirs[model_dir]))):
+                seen_model_dirs[model_dir] = weight_path
+        for weight_path in seen_model_dirs.values():
             # Extract model config from args.yaml
             train_dir = os.path.dirname(os.path.dirname(weight_path))
             args_path = os.path.join(train_dir, "args.yaml")
