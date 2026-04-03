@@ -35,9 +35,12 @@ def compute_image_weights(data_yaml_path):
     nc = data_config["nc"]
     class_names = data_config["names"]
 
-    # Resolve training labels directory
-    data_dir = os.path.dirname(data_yaml_path)
-    train_images_path = os.path.join(data_dir, data_config["train"])
+    # Resolve training labels directory.
+    # data.yaml train path may be relative (e.g. ../train/images or train/images).
+    # Ultralytics strips leading ../ and resolves relative to the yaml directory.
+    data_dir = os.path.dirname(os.path.abspath(data_yaml_path))
+    train_rel = data_config["train"].lstrip("../").lstrip("./")
+    train_images_path = os.path.normpath(os.path.join(data_dir, train_rel))
     train_labels_path = train_images_path.replace("images", "labels")
 
     # Count class instances across all label files
