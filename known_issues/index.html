@@ -10,13 +10,11 @@
       
       
       
-        <link rel="canonical" href="https://jmolleda.github.io/yolo-v12v26-seg-edge/class_imbalance/">
+        <link rel="canonical" href="https://jmolleda.github.io/yolo-v12v26-seg-edge/known_issues/">
       
       
-        <link rel="prev" href="../environment/">
+        <link rel="prev" href="../class_imbalance/">
       
-      
-        <link rel="next" href="../known_issues/">
       
       
         
@@ -27,7 +25,7 @@
     
     
       
-        <title>Class Imbalance - YOLO v12 v26 Segmentation Edge</title>
+        <title>Known Issues - YOLO v12 v26 Segmentation Edge</title>
       
     
     
@@ -76,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#class-imbalance" class="md-skip">
+        <a href="#known-issues" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Class Imbalance
+              Known Issues
             
           </span>
         </div>
@@ -447,6 +445,33 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../class_imbalance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Class Imbalance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -466,7 +491,7 @@
   <span class="md-ellipsis">
     
   
-    Class Imbalance
+    Known Issues
   
 
     
@@ -484,7 +509,7 @@
   <span class="md-ellipsis">
     
   
-    Class Imbalance
+    Known Issues
   
 
     
@@ -510,57 +535,74 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#problem" class="md-nav__link">
+  <a href="#yolov12-pretrained-segmentation-inference-failure" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Problem
+        YOLOv12 Pretrained Segmentation — Inference Failure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="YOLOv12 Pretrained Segmentation — Inference Failure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#symptom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Symptom
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#why-current-augmentation-does-not-help" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#root-cause" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why current augmentation does not help
+        Root Cause
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#solution-weighted-sampling-experiment-5" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#practical-impact" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Solution: Weighted Sampling (Experiment 5)
+        Practical Impact
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#other-approaches-considered-but-not-used-yet" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#workaround" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Other approaches considered but not used (yet)
+        Workaround
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#notes" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#environment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Notes
+        Environment
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -568,33 +610,6 @@
   
 </nav>
       
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../known_issues/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Known Issues
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -619,85 +634,87 @@
   
 
 
-<h1 id="class-imbalance">Class Imbalance</h1>
-<h2 id="problem">Problem</h2>
-<p>The training dataset (2,188 images, 9,423 annotations) has significant class imbalance:</p>
+<h1 id="known-issues">Known Issues</h1>
+<h2 id="yolov12-pretrained-segmentation-inference-failure">YOLOv12 Pretrained Segmentation — Inference Failure</h2>
+<p><strong>Affected models:</strong> <code>yolo12{n,s,m,l}</code> pretrained, segmentation task
+<strong>Affected phase:</strong> Inference benchmarking (PyTorch FP32)
+<strong>Status:</strong> Unresolved — Ultralytics bug</p>
+<h3 id="symptom">Symptom</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>AttributeError: &#39;dict&#39; object has no attribute &#39;shape&#39;
+</code></pre></div>
+<p>Occurs inside Ultralytics 8.4.26 at <code>ultralytics/models/yolo/segment/val.py</code>, line 104:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">imgsz</span> <span class="o">=</span> <span class="p">[</span><span class="mi">4</span> <span class="o">*</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">proto</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:]]</span>  <span class="c1"># get image size from proto</span>
+</code></pre></div>
+<p>The segmentation validator expects <code>proto</code> to be a tensor, but receives a dict when running inference on a yolo12 model loaded from a saved <code>.pt</code> file with a detection backbone used as segmentation pretrained weights.</p>
+<h3 id="root-cause">Root Cause</h3>
+<p>YOLOv12 has no official pretrained segmentation weights (<code>yolo12n-seg.pt</code> etc. do not exist in Ultralytics Hub). As a workaround, detection backbone weights (<code>yolo12n.pt</code>) are used for pretraining, and Ultralytics adapts them during training. This works during training (model is in memory with the full segmentation head), but when the trained weights are reloaded from disk for inference validation, the output format of the segmentation head differs from what the validator expects, causing the crash.</p>
+<h3 id="practical-impact">Practical Impact</h3>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th style="text-align: right;">Count</th>
-<th style="text-align: center;">Ratio vs largest</th>
+<th>Phase</th>
+<th>Status</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Solda</td>
-<td style="text-align: right;">2,536</td>
-<td style="text-align: center;">1.0x</td>
+<td>Training</td>
+<td>✓ Completed successfully</td>
 </tr>
 <tr>
-<td>IV-2</td>
-<td style="text-align: right;">2,224</td>
-<td style="text-align: center;">0.88x</td>
+<td>Training metrics (mAP50, mAP50-95, per-class)</td>
+<td>✓ Available in <code>report.txt</code></td>
 </tr>
 <tr>
-<td>IV-1B</td>
-<td style="text-align: right;">1,920</td>
-<td style="text-align: center;">0.76x</td>
+<td>Inference timing (FPS, latency)</td>
+<td>✗ Not available</td>
 </tr>
 <tr>
-<td>IV-4</td>
-<td style="text-align: right;">1,108</td>
-<td style="text-align: center;">0.44x</td>
-</tr>
-<tr>
-<td>IV-1A</td>
-<td style="text-align: right;">774</td>
-<td style="text-align: center;">0.31x</td>
-</tr>
-<tr>
-<td>IV-3</td>
-<td style="text-align: right;">393</td>
-<td style="text-align: center;">0.15x</td>
-</tr>
-<tr>
-<td>IV-6</td>
-<td style="text-align: right;">250</td>
-<td style="text-align: center;">0.10x</td>
-</tr>
-<tr>
-<td>IV-5</td>
-<td style="text-align: right;">218</td>
-<td style="text-align: center;">0.09x</td>
+<td>TensorRT export</td>
+<td>✗ Not attempted (no valid inference baseline)</td>
 </tr>
 </tbody>
 </table>
-<p>The top 3 classes hold 71% of all annotations. Solda has ~12x more instances than IV-5.</p>
-<h2 id="why-current-augmentation-does-not-help">Why current augmentation does not help</h2>
-<p>The augmentations in <code>hyperparameters.yaml</code> (mosaic, mixup, copy_paste, flips, rotation, HSV shifts, etc.) apply <strong>uniformly</strong> to all images regardless of class content. They increase visual variety but preserve the original class distribution — an underrepresented class remains underrepresented.</p>
-<h2 id="solution-weighted-sampling-experiment-5">Solution: Weighted Sampling (Experiment 5)</h2>
-<p><strong>Implemented</strong> via <code>scripts/weighted_sampler.py</code>. Monkey-patches the Ultralytics dataloader to sample images with probability inversely proportional to their class frequency using <code>WeightedRandomSampler</code>.</p>
-<ul>
-<li>Each image's weight = max inverse-frequency of any class it contains</li>
-<li>Images with rare classes (IV-5, IV-6, IV-3) are sampled ~10x more often</li>
-<li>Total epoch length stays the same (2,188 draws), only the mix changes</li>
-<li>Validation is unaffected — mAP reflects true performance</li>
-</ul>
-<p><strong>Experiment 5</strong> trains all model sizes — nano, small, medium, large — (both architectures, both approaches) with balanced sampling and compares per-class mAP against unbalanced baselines from Experiment 1.</p>
-<h2 id="other-approaches-considered-but-not-used-yet">Other approaches considered but not used (yet)</h2>
-<ol>
-<li><strong>Focal Loss</strong> (<code>fl_gamma</code>) — Would confound the weighted sampling experiment. Discussed as future work.</li>
-<li><strong>Image duplication</strong> — Co-occurrence problem (duplicating for IV-5 also inflates Solda), increases disk/epoch time.</li>
-<li><strong>Targeted augmentation</strong> — AugmenTory library doesn't support rebalancing; Albumentations doesn't handle YOLO polygons natively.</li>
-<li><strong>Undersampling</strong> — Loses data from an already small dataset.</li>
-</ol>
-<h2 id="notes">Notes</h2>
-<ul>
-<li>For the benchmark (comparing architectures/formats), the imbalance affects all models equally, so comparisons remain fair</li>
-<li>The imbalance should be documented with the results as a dataset limitation</li>
-<li>Per-class mAP from the benchmark results will quantify the actual impact</li>
-</ul>
+<p>The 4 affected models (<code>yolo12n/s/m/l</code> pretrained seg) are excluded from inference benchmark comparisons. Their training accuracy metrics remain valid and are included in accuracy analysis.</p>
+<h3 id="workaround">Workaround</h3>
+<p>The trained weights (<code>best.pt</code>) are valid and fully usable. Inference benchmarking can be retried at any time with a different Ultralytics version without retraining:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Create a venv with a different Ultralytics version</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">ultralytics</span><span class="o">==</span>&lt;version&gt;
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Re-run inference for affected models</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>python<span class="w"> </span>scripts/infer.py<span class="w"> </span>--weights<span class="w"> </span>results/rtx5090/core_comparison/yolo12_seg_nano_pretrained/train/weights/best.pt<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span>--format<span class="w"> </span>pytorch<span class="w"> </span>--precision<span class="w"> </span>fp32<span class="w"> </span>--imgsz<span class="w"> </span><span class="m">640</span><span class="w"> </span>--batch<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span>--arch<span class="w"> </span>yolo12<span class="w"> </span>--size<span class="w"> </span>nano<span class="w"> </span>--task<span class="w"> </span>segment<span class="w"> </span>--approach<span class="w"> </span>pretrained<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span>--experiment<span class="w"> </span>core_comparison<span class="w"> </span>--device<span class="w"> </span>rtx5090
+</code></pre></div>
+<p>Repeat for <code>small</code>, <code>medium</code>, <code>large</code>. The dashboard will pick up the new <code>report_*.txt</code> files automatically.</p>
+<h3 id="environment">Environment</h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ultralytics</td>
+<td>8.4.26</td>
+</tr>
+<tr>
+<td>PyTorch</td>
+<td>2.7.0+cu128</td>
+</tr>
+<tr>
+<td>Python</td>
+<td>3.12.3</td>
+</tr>
+<tr>
+<td>Hardware</td>
+<td>NVIDIA RTX 5090</td>
+</tr>
+</tbody>
+</table>
 
 
 
