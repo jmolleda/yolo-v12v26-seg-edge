@@ -105,12 +105,17 @@ def get_weights_path(experiment_name, architecture, task, model_size, approach):
     """Return path to trained weights (best.pt) from RTX 5090 training.
 
     Training always happens on RTX 5090. Other devices load these weights.
+    Ultralytics increments the output folder name (train -> train2 -> train3)
+    when a folder already exists, so we pick the highest-numbered one.
     """
     results_dir = get_results_dir(
         experiment_name, architecture, task, model_size, approach, "rtx5090"
     )
-    # Ultralytics saves to {project}/{name}/weights/best.pt
-    return os.path.join(results_dir, "train", "weights", "best.pt")
+    # Find the latest train* folder
+    import glob as _glob
+    train_dirs = sorted(_glob.glob(os.path.join(results_dir, "train*")))
+    train_dir = train_dirs[-1] if train_dirs else os.path.join(results_dir, "train")
+    return os.path.join(train_dir, "weights", "best.pt")
 
 
 def get_machine_name():

@@ -26,6 +26,7 @@ nav:
   - Hyperparameters: hyperparameters.md
   - Environment: environment.md
   - Class Imbalance: class_imbalance.md
+  - Known Issues: known_issues.md
 
 markdown_extensions:
   - tables
