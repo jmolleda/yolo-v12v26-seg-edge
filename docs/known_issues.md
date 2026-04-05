@@ -52,6 +52,38 @@ python scripts/infer.py --weights results/rtx5090/core_comparison/yolo12_seg_nan
 
 Repeat for `small`, `medium`, `large`. The dashboard will pick up the new `report_*.txt` files automatically.
 
+---
+
+## Weighted Sampler Silent Failure — yolo26 Medium Pretrained Balanced
+
+**Affected model:** `yolo26_seg_medium_pretrained_balanced` (class_imbalance experiment)
+**Status:** Data point unreliable — exclude from class imbalance analysis
+
+### Symptom
+
+The `yolo26_seg_medium_pretrained_balanced` training run produced results **pixel-perfect identical** to `yolo26_seg_medium_pretrained` (core_comparison) across all 374 epochs — every loss and metric value matches to 5+ decimal places, with only the wall-clock `time` column differing by ~30 seconds per epoch.
+
+### Root Cause
+
+The weighted sampler works via a monkey-patch of `ultralytics.data.build.build_dataloader` using a module-level global (`_original_build_dataloader`). When multiple balanced runs execute sequentially in the same Python process, the patch/restore cycle can result in the patch being applied to an already-patched function, or not being applied at all, depending on how Ultralytics internally references its dataloader builder. For this specific run the patch had no effect — training proceeded with the default uniform sampler.
+
+### Practical Impact
+
+- The balanced result for yolo26 medium pretrained is a duplicate of the unbalanced result
+- It must be **excluded** from class imbalance analysis comparisons
+- All other balanced models show measurable differences from their unbalanced counterparts and are considered valid
+
+### Resolution
+
+To obtain a valid result, re-run this specific model in isolation (fresh process, no prior balanced runs):
+
+```bash
+python -c "
+from scripts.train import train_model
+train_model('yolo26', 'medium', 'segment', 'pretrained_balanced', 'class_imbalance')
+"
+```
+
 ### Environment
 
 | Component | Version |
