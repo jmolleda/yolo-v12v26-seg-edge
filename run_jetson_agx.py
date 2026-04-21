@@ -11,6 +11,8 @@ Usage:
 
 import argparse
 import os
+import subprocess
+import sys
 
 from scripts.utils import (
     PROJECT_ROOT,
@@ -21,6 +23,40 @@ from scripts.utils import (
 from scripts import utils as _utils_module
 from scripts.benchmark_logger import BenchmarkLogger
 from scripts.aggregate import find_reports, write_csv
+
+
+def _run_subprocess(cmd, label):
+    """Run a command as a subprocess, streaming output. Returns True on success."""
+    result = subprocess.run(cmd, cwd=PROJECT_ROOT)
+    if result.returncode != 0:
+        raise RuntimeError(f"Subprocess exited with code {result.returncode}: {label}")
+    return True
+
+
+def _read_report_metrics(report_path):
+    """Extract fps/map50/map50_95 from a saved report.txt file."""
+    metrics = {"fps": 0.0, "map50": 0.0, "map50_95": 0.0}
+    if not os.path.exists(report_path):
+        return metrics
+    with open(report_path) as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("FPS:"):
+                try:
+                    metrics["fps"] = float(line.split(":")[1].strip())
+                except ValueError:
+                    pass
+            elif line.startswith("mAP50:") and "mAP50-95" not in line:
+                try:
+                    metrics["map50"] = float(line.split(":")[1].strip())
+                except ValueError:
+                    pass
+            elif line.startswith("mAP50-95:"):
+                try:
+                    metrics["map50_95"] = float(line.split(":")[1].strip())
+                except ValueError:
+                    pass
+    return metrics
 
 DEVICE = "jetson_agx"
 
@@ -81,8 +117,7 @@ def main():
                   f"img={r['imgsz']} b={r['batch']} | exp={r['experiment_name']}")
         return
 
-    # Lazy imports (require ultralytics)
-    from scripts.export import export_model
+    # Lazy import (requires ultralytics) — TRT export runs as subprocess
     from scripts.infer import run_inference
 
     logger.register_runs(runs)
@@ -107,7 +142,13 @@ def main():
 
         logger.start_run(run_id)
         try:
-            export_model(pt_path, run["precision"], run["imgsz"])
+            _run_subprocess(
+                [sys.executable, "scripts/export.py",
+                 "--weights", pt_path,
+                 "--precision", run["precision"],
+                 "--imgsz", str(run["imgsz"])],
+                label=run_id,
+            )
             exported.add(export_key)
             logger.complete_run(run_id)
         except Exception as e:
@@ -140,25 +181,50 @@ def main():
 
         logger.start_run(run_id)
         try:
-            result = run_inference(
-                weights_path=weights_path,
-                fmt=run["format"],
-                precision=run["precision"],
-                imgsz=run["imgsz"],
-                batch=run["batch"],
-                architecture=run["architecture"],
-                model_size=run["model_size"],
-                task=run["task"],
-                approach=run["approach"],
-                experiment_name=run["experiment_name"],
-                device_name=DEVICE,
-                **infer_overrides,
-            )
-            logger.complete_run(run_id, {
-                "fps": result.get("fps", 0),
-                "map50": result.get("map50", 0),
-                "map50_95": result.get("map50_95", 0),
-            })
+            if run["format"] == "tensorrt":
+                # TRT inference runs in an isolated subprocess to avoid
+                # CUDA context conflicts after long PyTorch sessions.
+                cmd = [
+                    sys.executable, "scripts/infer.py",
+                    "--weights", weights_path,
+                    "--format", run["format"],
+                    "--precision", run["precision"],
+                    "--imgsz", str(run["imgsz"]),
+                    "--batch", str(run["batch"]),
+                    "--arch", run["architecture"],
+                    "--size", run["model_size"],
+                    "--task", run["task"],
+                    "--approach", run["approach"],
+                    "--experiment", run["experiment_name"],
+                    "--device", DEVICE,
+                ]
+                if infer_overrides.get("warmup_runs") is not None:
+                    cmd += ["--warmup", str(infer_overrides["warmup_runs"])]
+                if infer_overrides.get("measure_runs") is not None:
+                    cmd += ["--runs", str(infer_overrides["measure_runs"])]
+                _run_subprocess(cmd, label=run_id)
+                metrics = _read_report_metrics(report_path)
+            else:
+                result = run_inference(
+                    weights_path=weights_path,
+                    fmt=run["format"],
+                    precision=run["precision"],
+                    imgsz=run["imgsz"],
+                    batch=run["batch"],
+                    architecture=run["architecture"],
+                    model_size=run["model_size"],
+                    task=run["task"],
+                    approach=run["approach"],
+                    experiment_name=run["experiment_name"],
+                    device_name=DEVICE,
+                    **infer_overrides,
+                )
+                metrics = {
+                    "fps": result.get("fps", 0),
+                    "map50": result.get("map50", 0),
+                    "map50_95": result.get("map50_95", 0),
+                }
+            logger.complete_run(run_id, metrics)
         except Exception as e:
             logger.fail_run(run_id, str(e))
 
