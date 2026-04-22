@@ -104,6 +104,32 @@
   .metric-warn { font-weight: 700; color: #fb923c; }
   @media (max-width: 1000px) { .charts-grid { grid-template-columns: 1fr; } }
   .timestamp { text-align: center; color: #475569; font-size: 0.8rem; margin-top: 20px; }
+  /* Inference table */
+  .infer-controls {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px;
+  }
+  .infer-controls input[type=text] {
+    background: #0f172a; border: 1px solid #334155; color: #e2e8f0;
+    padding: 6px 12px; border-radius: 6px; font-size: 0.82rem; width: 220px;
+  }
+  .infer-controls input[type=text]::placeholder { color: #475569; }
+  .infer-controls select {
+    background: #0f172a; border: 1px solid #334155; color: #e2e8f0;
+    padding: 6px 10px; border-radius: 6px; font-size: 0.82rem;
+  }
+  .infer-controls label { color: #94a3b8; font-size: 0.78rem; display: flex; align-items: center; gap: 5px; }
+  .infer-count { color: #94a3b8; font-size: 0.8rem; margin-left: auto; }
+  #inferTable th { cursor: pointer; }
+  #inferTable th:hover { background: #1e4a7f; }
+  #inferTable th.sort-asc::after { content: " ▲"; }
+  #inferTable th.sort-desc::after { content: " ▼"; }
+  #inferTable tr.isep td { border-top: 2px solid #334155; }
+  .fmt-pt  { background: #1c1917; color: #a8a29e; border: 1px solid #292524; }
+  .fmt-trt { background: #431407; color: #f97316; }
+  .ap-s  { color: #fb923c; }
+  .ap-p  { color: #34d399; }
+  .ap-sb { color: #f472b6; }
+  .ap-pb { color: #2dd4bf; }
 </style>
 </head>
 <body>
@@ -200,23 +226,65 @@
 <div class="tab-content" id="tab-inference">
   <div class="card">
     <h2>Inference Results</h2>
+    <p style="color:#64748b;margin-bottom:14px;font-size:0.8rem">
+      FPS colour: <span style="color:#4ade80">&#9632;</span>&nbsp;&ge;100&ensp;
+      <span style="color:#86efac">&#9632;</span>&nbsp;&ge;30&ensp;
+      <span style="color:#fbbf24">&#9632;</span>&nbsp;&ge;10&ensp;
+      <span style="color:#f87171">&#9632;</span>&nbsp;&lt;10
+    </p>
+    <div class="infer-controls">
+      <input type="text" id="inferSearch" placeholder="Search experiment, approach, size…" oninput="filterInfer()">
+      <label>Device:
+        <select id="fInferDevice" onchange="filterInfer()">
+          <option value="">All</option><option>rtx5090</option><option>jetson_agx</option>
+        </select>
+      </label>
+      <label>Arch:
+        <select id="fInferArch" onchange="filterInfer()">
+          <option value="">All</option><option>yolo12</option><option>yolo26</option>
+        </select>
+      </label>
+      <label>Format:
+        <select id="fInferFormat" onchange="filterInfer()">
+          <option value="">All</option><option>pytorch</option><option>tensorrt</option>
+        </select>
+      </label>
+      <label>Experiment:
+        <select id="fInferExp" onchange="filterInfer()">
+          <option value="">All</option>
+          <option value="core comparison">core comparison</option>
+          <option value="class imbalance">class imbalance</option>
+          <option value="detection vs segmentation">detection vs segmentation</option>
+          <option value="input size">input size</option>
+          <option value="batch throughput">batch throughput</option>
+        </select>
+      </label>
+      <span class="infer-count" id="inferCount"></span>
+    </div>
     <div class="table-wrap">
       <table id="inferTable">
         <thead><tr>
-          <th>Device</th><th>Exp</th><th>Arch</th><th>Size</th><th>Approach</th>
-          <th>Format</th><th>Prec</th><th>ImgSz</th><th>Batch</th>
-          <th>Inf (ms)</th><th>Total (ms)</th><th>FPS</th>
-          <th>Median</th><th>p95</th>
-          <th>mAP50</th><th>mAP50-95</th>
-          <th>Model MB</th><th>GPU MB</th>
+          <th onclick="sortInfer(0)">Device</th>
+          <th onclick="sortInfer(1)">Experiment</th>
+          <th onclick="sortInfer(2)">Arch</th>
+          <th onclick="sortInfer(3)">Task</th>
+          <th onclick="sortInfer(4)">Size</th>
+          <th onclick="sortInfer(5)">Approach</th>
+          <th onclick="sortInfer(6)">Format</th>
+          <th onclick="sortInfer(7)">Prec</th>
+          <th onclick="sortInfer(8)">ImgSz</th>
+          <th onclick="sortInfer(9)">Batch</th>
+          <th onclick="sortInfer(10)">FPS</th>
+          <th onclick="sortInfer(11)">Inf&nbsp;ms</th>
+          <th onclick="sortInfer(12)">Total&nbsp;ms</th>
+          <th onclick="sortInfer(13)">mAP50</th>
+          <th onclick="sortInfer(14)">mAP50&#8209;95</th>
+          <th onclick="sortInfer(15)">Model&nbsp;MB</th>
+          <th onclick="sortInfer(16)">GPU&nbsp;MB</th>
         </tr></thead>
         <tbody id="inferTableBody"></tbody>
       </table>
     </div>
-  </div>
-  <div class="charts-grid">
-    <div class="chart-card"><h3>FPS by Model</h3><canvas id="chartInferFPS"></canvas></div>
-    <div class="chart-card"><h3>Latency Breakdown (ms)</h3><canvas id="chartLatency"></canvas></div>
   </div>
 </div>
 
@@ -660,79 +728,119 @@ function renderConvergence() {
 }
 
 // ---- INFERENCE ----
-function renderInference() {
-  chartDefaults();
-  const data = INFER_DATA;
-  const tbody = document.getElementById('inferTableBody');
-  tbody.innerHTML = data.map(r => {
-    return `<tr>
+const SIZE_ORDER_I = {'nano':0,'small':1,'medium':2,'large':3};
+const EXP_ORDER_I  = {'core_comparison':0,'class_imbalance':1,'detection_vs_segmentation':2,'input_size':3,'batch_throughput':4};
+const DEV_ORDER_I  = {'rtx5090':0,'jetson_agx':1};
+
+const APPROACH_SHORT_I = {
+  'scratch':'scratch', 'pretrained':'pretrained',
+  'scratch_balanced':'scratch+bal', 'pretrained_balanced':'pretrained+bal'
+};
+const APPROACH_CSS_I = {
+  'scratch':'ap-s','pretrained':'ap-p',
+  'scratch_balanced':'ap-sb','pretrained_balanced':'ap-pb'
+};
+
+function fpsCss(fps) {
+  if (!fps) return '';
+  if (fps >= 100) return 'color:#4ade80;font-weight:700';
+  if (fps >= 30)  return 'color:#86efac';
+  if (fps >= 10)  return 'color:#fbbf24';
+  return 'color:#f87171';
+}
+
+function buildInferRows(data) {
+  const sorted = [...data].sort((a,b) => {
+    const dA=DEV_ORDER_I[a.device]??9, dB=DEV_ORDER_I[b.device]??9;
+    if (dA!==dB) return dA-dB;
+    const eA=EXP_ORDER_I[a.experiment]??9, eB=EXP_ORDER_I[b.experiment]??9;
+    if (eA!==eB) return eA-eB;
+    if (a.arch!==b.arch) return a.arch.localeCompare(b.arch);
+    if (a.task!==b.task) return a.task.localeCompare(b.task);
+    const sA=SIZE_ORDER_I[a.size]??9, sB=SIZE_ORDER_I[b.size]??9;
+    if (sA!==sB) return sA-sB;
+    if (a.approach!==b.approach) return a.approach.localeCompare(b.approach);
+    if (a.format!==b.format) return a.format.localeCompare(b.format);
+    return (a.format_precision||'').localeCompare(b.format_precision||'');
+  });
+
+  let prev = null;
+  return sorted.map(r => {
+    const sep = prev && (r.experiment !== prev.experiment || r.device !== prev.device);
+    prev = r;
+    const apCss = APPROACH_CSS_I[r.approach] || '';
+    const apLabel = APPROACH_SHORT_I[r.approach] || r.approach;
+    const fmtCls = r.format === 'tensorrt' ? 'fmt-trt' : 'fmt-pt';
+    const fps = r.fps;
+    const expLabel = (r.experiment||'').replace(/_/g,' ');
+    return `<tr${sep?' class="isep"':''}>
       <td><span class="device-badge device-${r.device}">${r.device}</span></td>
-      <td>${r.experiment}</td>
+      <td style="color:#94a3b8">${expLabel}</td>
       <td><span class="arch-badge arch-${r.arch}">${r.arch.toUpperCase()}</span></td>
+      <td>${r.task||'-'}</td>
       <td><span class="size-badge">${r.size}</span></td>
-      <td class="approach-${r.approach}">${r.approach}</td>
-      <td>${r.format || '-'}</td>
-      <td>${r.format_precision || '-'}</td>
-      <td>${r.imgsz || '-'}</td>
-      <td>${r.batch || '-'}</td>
-      <td>${fmtMs(r.inference_ms)}</td>
-      <td>${fmtMs(r.total_ms)}</td>
-      <td>${fmtNum(r.fps, 1)}</td>
-      <td>${fmtMs(r.median_ms)}</td>
-      <td>${fmtMs(r.p95_ms)}</td>
-      <td>${fmtPct(r.map50)}</td>
-      <td>${fmtPct(r.map50_95)}</td>
-      <td>${fmtNum(r.model_size_mb, 1)}</td>
-      <td>${fmtNum(r.gpu_mem_mb, 0)}</td>
+      <td><span class="${apCss}">${apLabel}</span></td>
+      <td><span class="badge ${fmtCls}">${r.format||'-'}</span></td>
+      <td>${r.format_precision||'-'}</td>
+      <td>${r.imgsz||'-'}</td>
+      <td>${r.batch||'-'}</td>
+      <td style="${fpsCss(fps)}">${fps!=null?fps.toFixed(1):'—'}</td>
+      <td>${r.inference_ms!=null?r.inference_ms.toFixed(2):'—'}</td>
+      <td>${r.total_ms!=null?r.total_ms.toFixed(2):'—'}</td>
+      <td>${r.map50!=null?(r.map50*100).toFixed(2)+'%':'—'}</td>
+      <td>${r.map50_95!=null?(r.map50_95*100).toFixed(2)+'%':'—'}</td>
+      <td>${r.model_size_mb!=null?r.model_size_mb.toFixed(1):'—'}</td>
+      <td>${r.gpu_mem_mb!=null?Math.round(r.gpu_mem_mb):'—'}</td>
     </tr>`;
   }).join('');
+}
 
-  if (data.length === 0) return;
+let inferSortCol = -1, inferSortDir = 1;
 
-  // FPS bar
-  const labels = data.map(r => shortName(r));
-  if (charts.inferFPS) charts.inferFPS.destroy();
-  charts.inferFPS = new Chart(document.getElementById('chartInferFPS'), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'FPS',
-        data: data.map(r => r.fps || 0),
-        backgroundColor: data.map((r, i) => getColor(i) + 'cc'),
-        borderColor: data.map((r, i) => getColor(i)),
-        borderWidth: 1, borderRadius: 4
-      }]
-    },
-    options: {
-      responsive: true, plugins: { legend: { display: false } },
-      scales: {
-        y: { title: { display: true, text: 'FPS' }, grid: { color: '#1e293b' } },
-        x: { grid: { display: false } }
-      }
-    }
+function renderInference() {
+  const tbody = document.getElementById('inferTableBody');
+  tbody.innerHTML = buildInferRows(INFER_DATA);
+  document.getElementById('inferCount').textContent = INFER_DATA.length + ' rows';
+}
+
+function filterInfer() {
+  const q    = document.getElementById('inferSearch').value.toLowerCase();
+  const fDev = document.getElementById('fInferDevice').value.toLowerCase();
+  const fArc = document.getElementById('fInferArch').value.toLowerCase();
+  const fFmt = document.getElementById('fInferFormat').value.toLowerCase();
+  const fExp = document.getElementById('fInferExp').value.toLowerCase();
+  let visible = 0;
+  document.querySelectorAll('#inferTableBody tr').forEach(row => {
+    const txt = row.textContent.toLowerCase();
+    const show = (!q    || txt.includes(q))
+      && (!fDev || row.cells[0].textContent.toLowerCase().includes(fDev))
+      && (!fArc || row.cells[2].textContent.toLowerCase().includes(fArc))
+      && (!fFmt || row.cells[6].textContent.toLowerCase().includes(fFmt))
+      && (!fExp || row.cells[1].textContent.toLowerCase().includes(fExp));
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
   });
+  document.getElementById('inferCount').textContent = visible + ' rows';
+}
 
-  // Latency stacked bar
-  if (charts.latency) charts.latency.destroy();
-  charts.latency = new Chart(document.getElementById('chartLatency'), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        { label: 'Preprocess', data: data.map(r => r.preprocess_ms || 0), backgroundColor: '#38bdf8aa', borderColor: '#38bdf8', borderWidth: 1 },
-        { label: 'Inference', data: data.map(r => r.inference_ms || 0), backgroundColor: '#f472b6aa', borderColor: '#f472b6', borderWidth: 1 },
-        { label: 'Postprocess', data: data.map(r => r.postprocess_ms || 0), backgroundColor: '#34d399aa', borderColor: '#34d399', borderWidth: 1 }
-      ]
-    },
-    options: {
-      responsive: true, plugins: { legend: { position: 'top' } },
-      scales: {
-        y: { stacked: true, title: { display: true, text: 'ms/image' }, grid: { color: '#1e293b' } },
-        x: { stacked: true, grid: { display: false } }
-      }
-    }
+function sortInfer(col) {
+  const ths = document.querySelectorAll('#inferTable th');
+  ths.forEach(t => t.classList.remove('sort-asc','sort-desc'));
+  if (inferSortCol === col) { inferSortDir = -inferSortDir; } else { inferSortCol = col; inferSortDir = 1; }
+  ths[col].classList.add(inferSortDir === 1 ? 'sort-asc' : 'sort-desc');
+  const tbody = document.getElementById('inferTableBody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  rows.sort((a,b) => {
+    const av = a.cells[col]?.textContent.trim() || '';
+    const bv = b.cells[col]?.textContent.trim() || '';
+    const an = parseFloat(av), bn = parseFloat(bv);
+    if (!isNaN(an) && !isNaN(bn)) return (an-bn)*inferSortDir;
+    return av.localeCompare(bv)*inferSortDir;
   });
+  rows.forEach(r => tbody.appendChild(r));
+  // recount
+  const vis = rows.filter(r=>r.style.display!=='none').length;
+  document.getElementById('inferCount').textContent = vis + ' rows';
 }
 
 // ---- HEAD-TO-HEAD ----
