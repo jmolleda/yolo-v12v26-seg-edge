@@ -592,6 +592,7 @@ def build_html(training_models, inference_reports, train_reports, hw_metrics):
 <!-- ============ OVERVIEW TAB ============ -->
 <div class="tab-content active" id="tab-overview">
   <div class="stats-row" id="overviewStats"></div>
+  <div class="filters" id="overviewFilters"></div>
   <div class="card">
     <h2>Training Summary</h2>
     <div class="table-wrap">
@@ -644,6 +645,7 @@ def build_html(training_models, inference_reports, train_reports, hw_metrics):
 
 <!-- ============ CONVERGENCE TAB ============ -->
 <div class="tab-content" id="tab-convergence">
+  <div class="filters" id="convergenceFilters"></div>
   <div class="card">
     <h2>Convergence Analysis</h2>
     <p style="color:#64748b;margin-bottom:16px">Best epoch, early stopping, and efficiency metrics</p>
@@ -802,7 +804,10 @@ const COLORS = [
 const SIZE_ORDER = {{'nano':0,'small':1,'medium':2,'large':3}};
 
 let charts = {{}};
-let trainFilters = {{ device: 'all', arch: 'all', size: 'all', approach: 'all', experiment: 'all' }};
+let trainFilters  = {{ device:'all', arch:'all', task:'all', size:'all', approach:'all', experiment:'all' }};
+let overviewFilters = {{ device:'all', arch:'all', task:'all', size:'all', approach:'all', experiment:'all' }};
+let convFilters   = {{ device:'all', arch:'all', task:'all', size:'all', approach:'all', experiment:'all' }};
+let pcFilters     = {{ arch:'all', size:'all', approach:'all' }};
 
 document.getElementById('genTime').textContent = new Date().toLocaleString();
 
@@ -842,21 +847,23 @@ function fmtPct(v) {{ return v != null ? (v * 100).toFixed(2) + '%' : '-'; }}
 function fmtMs(v) {{ return v != null ? v.toFixed(2) : '-'; }}
 function fmtNum(v, d) {{ return v != null ? Number(v).toFixed(d || 1) : '-'; }}
 
-function filteredTrain() {{
-  return TRAIN_DATA.filter(m => {{
-    if (trainFilters.device !== 'all' && m.device !== trainFilters.device) return false;
-    if (trainFilters.arch !== 'all' && m.arch !== trainFilters.arch) return false;
-    if (trainFilters.size !== 'all' && m.size !== trainFilters.size) return false;
-    if (trainFilters.approach !== 'all' && m.approach !== trainFilters.approach) return false;
-    if (trainFilters.experiment !== 'all' && m.experiment !== trainFilters.experiment) return false;
+function applyFilters(data, filtersObj) {{
+  return data.filter(m => {{
+    for (const [k, v] of Object.entries(filtersObj)) {{
+      if (v !== 'all' && m[k] !== v) return false;
+    }}
     return true;
   }});
 }}
+function filteredTrain()    {{ return applyFilters(TRAIN_DATA, trainFilters); }}
+function filteredOverview() {{ return applyFilters(TRAIN_DATA, overviewFilters); }}
+function filteredConv()     {{ return applyFilters(TRAIN_DATA, convFilters); }}
+function filteredPC()       {{ return applyFilters(TRAIN_REPORTS.filter(r => r.per_class), pcFilters); }}
 
 // ---- OVERVIEW ----
 function renderOverview() {{
-  const models = TRAIN_DATA;
-  const bestModel = models.length > 0 ? models[0] : null;
+  const models = filteredOverview();
+  const bestModel = models.length > 0 ? models.reduce((a,b) => a.best_mAP50_95_B >= b.best_mAP50_95_B ? a : b) : null;
   const totalTime = models.reduce((s, m) => s + m.training_time_s, 0);
   const hours = (totalTime / 3600).toFixed(1);
 
@@ -1009,22 +1016,9 @@ function renderOverview() {{
   }});
 }}
 
-// ---- TRAINING CURVES ----
-function buildTrainingFilters() {{
-  const devs = [...new Set(TRAIN_DATA.map(m => m.device))].sort();
-  const exps = [...new Set(TRAIN_DATA.map(m => m.experiment))].sort();
-  const archs = [...new Set(TRAIN_DATA.map(m => m.arch))].sort();
-  const sizes = ['nano','small','medium','large'].filter(s => TRAIN_DATA.some(m => m.size === s));
-  const approaches = [...new Set(TRAIN_DATA.map(m => m.approach))].sort();
-
+// ---- GENERIC FILTER BAR BUILDER ----
+function buildFilterBar(containerId, filtersObj, groups, onChangeFn) {{
   let html = '';
-  const groups = [
-    ['device', 'Device', devs],
-    ['experiment', 'Exp', exps],
-    ['arch', 'Arch', archs],
-    ['size', 'Size', sizes],
-    ['approach', 'Approach', approaches]
-  ];
   for (const [key, label, vals] of groups) {{
     html += `<div class="filter-group"><label>${{label}}:</label>`;
     html += `<button class="filter-btn active" data-filter="${{key}}" data-value="all">All</button>`;
@@ -1033,17 +1027,35 @@ function buildTrainingFilters() {{
     }}
     html += '</div>';
   }}
-  document.getElementById('trainingFilters').innerHTML = html;
-
-  document.querySelectorAll('#trainingFilters .filter-btn').forEach(btn => {{
+  document.getElementById(containerId).innerHTML = html;
+  document.querySelectorAll(`#${{containerId}} .filter-btn`).forEach(btn => {{
     btn.addEventListener('click', () => {{
       const ft = btn.dataset.filter;
-      trainFilters[ft] = btn.dataset.value;
-      document.querySelectorAll(`#trainingFilters .filter-btn[data-filter="${{ft}}"]`).forEach(b => b.classList.remove('active'));
+      filtersObj[ft] = btn.dataset.value;
+      document.querySelectorAll(`#${{containerId}} .filter-btn[data-filter="${{ft}}"]`).forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      renderTrainingCurves();
+      onChangeFn();
     }});
   }});
+}}
+
+function trainFilterGroups() {{
+  const devs  = [...new Set(TRAIN_DATA.map(m => m.device))].sort();
+  const exps  = [...new Set(TRAIN_DATA.map(m => m.experiment))].sort();
+  const archs = [...new Set(TRAIN_DATA.map(m => m.arch))].sort();
+  const tasks = [...new Set(TRAIN_DATA.map(m => m.task))].sort();
+  const sizes = ['nano','small','medium','large'].filter(s => TRAIN_DATA.some(m => m.size === s));
+  const apps  = [...new Set(TRAIN_DATA.map(m => m.approach))].sort();
+  return [
+    ['device','Device',devs], ['experiment','Exp',exps],
+    ['arch','Arch',archs], ['task','Task',tasks],
+    ['size','Size',sizes], ['approach','Approach',apps]
+  ];
+}}
+
+// ---- TRAINING CURVES ----
+function buildTrainingFilters() {{
+  buildFilterBar('trainingFilters', trainFilters, trainFilterGroups(), renderTrainingCurves);
 }}
 
 function makeCurveChart(canvasId, data, yField, yLabel) {{
@@ -1090,7 +1102,7 @@ function renderTrainingCurves() {{
 // ---- CONVERGENCE ----
 function renderConvergence() {{
   chartDefaults();
-  const models = TRAIN_DATA;
+  const models = filteredConv();
   const tbody = document.getElementById('convTableBody');
   tbody.innerHTML = models.map(m => {{
     const patience = m.total_epochs - m.best_epoch;
@@ -1375,8 +1387,8 @@ function renderComparison() {{
 // ---- PER-CLASS ----
 function renderPerClass() {{
   chartDefaults();
-  // Collect models that have per_class data
-  const modelsWithPC = TRAIN_REPORTS.filter(r => r.per_class);
+  // Collect models that have per_class data, filtered
+  const modelsWithPC = filteredPC();
   if (modelsWithPC.length === 0) {{
     document.getElementById('perclassTableBody').innerHTML =
       '<tr><td colspan="10" style="text-align:center;color:#94a3b8;">No per-class data available yet. Run extract_conf.py after benchmark completes.</td></tr>';
@@ -1595,8 +1607,15 @@ function renderResources() {{
 }}
 
 // ---- INIT ----
-renderOverview();
+buildFilterBar('overviewFilters', overviewFilters, trainFilterGroups(), renderOverview);
+buildFilterBar('convergenceFilters', convFilters, trainFilterGroups(), renderConvergence);
+buildFilterBar('perclassFilters', pcFilters, [
+  ['arch','Arch',[...new Set(TRAIN_REPORTS.filter(r=>r.per_class).map(r=>r.arch))].sort()],
+  ['size','Size',['nano','small','medium','large'].filter(s=>TRAIN_REPORTS.some(r=>r.per_class&&r.size===s))],
+  ['approach','Approach',[...new Set(TRAIN_REPORTS.filter(r=>r.per_class).map(r=>r.approach))].sort()]
+], renderPerClass);
 buildTrainingFilters();
+renderOverview();
 renderTrainingCurves();
 renderConvergence();
 renderInference();
