@@ -16,6 +16,8 @@
         <link rel="prev" href="../class_imbalance/">
       
       
+        <link rel="next" href="../train_results_report/">
+      
       
         
       
@@ -630,17 +632,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#practical-impact_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Practical Impact
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#resolution" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -671,6 +662,33 @@
   
 </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../train_results_report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Training Results Report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -752,24 +770,19 @@
 <hr />
 <h2 id="weighted-sampler-silent-failure-yolo26-medium-pretrained-balanced">Weighted Sampler Silent Failure — yolo26 Medium Pretrained Balanced</h2>
 <p><strong>Affected model:</strong> <code>yolo26_seg_medium_pretrained_balanced</code> (class_imbalance experiment)
-<strong>Status:</strong> Data point unreliable — exclude from class imbalance analysis</p>
+<strong>Status:</strong> Resolved — valid result obtained from isolated rerun (train3, 2026-04-05)</p>
 <h3 id="symptom_1">Symptom</h3>
 <p>The <code>yolo26_seg_medium_pretrained_balanced</code> training run produced results <strong>pixel-perfect identical</strong> to <code>yolo26_seg_medium_pretrained</code> (core_comparison) across all 374 epochs — every loss and metric value matches to 5+ decimal places, with only the wall-clock <code>time</code> column differing by ~30 seconds per epoch.</p>
 <h3 id="root-cause_1">Root Cause</h3>
 <p>The weighted sampler works via a monkey-patch of <code>ultralytics.data.build.build_dataloader</code> using a module-level global (<code>_original_build_dataloader</code>). When multiple balanced runs execute sequentially in the same Python process, the patch/restore cycle can result in the patch being applied to an already-patched function, or not being applied at all, depending on how Ultralytics internally references its dataloader builder. For this specific run the patch had no effect — training proceeded with the default uniform sampler.</p>
-<h3 id="practical-impact_1">Practical Impact</h3>
-<ul>
-<li>The balanced result for yolo26 medium pretrained is a duplicate of the unbalanced result</li>
-<li>It must be <strong>excluded</strong> from class imbalance analysis comparisons</li>
-<li>All other balanced models show measurable differences from their unbalanced counterparts and are considered valid</li>
-</ul>
 <h3 id="resolution">Resolution</h3>
-<p>To obtain a valid result, re-run this specific model in isolation (fresh process, no prior balanced runs):</p>
+<p>Re-run in an isolated fresh Python process (no prior balanced runs in the same session):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="s2">from scripts.train import train_model</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="s2">train_model(&#39;yolo26&#39;, &#39;medium&#39;, &#39;segment&#39;, &#39;pretrained_balanced&#39;, &#39;class_imbalance&#39;)</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="s2">&quot;</span>
 </code></pre></div>
+<p>The rerun completed on 2026-04-05 (train3). Valid result: <strong>mAP50 = 0.5210</strong> (baseline unbalanced = 0.5271, Δ = −0.006). The weighted sampler was confirmed active (results are distinct from baseline). All 16 class_imbalance models are now valid.</p>
 <h3 id="environment">Environment</h3>
 <table>
 <thead>

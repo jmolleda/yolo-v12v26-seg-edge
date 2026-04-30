@@ -1,0 +1,2775 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Benchmark framework for comparing YOLO model performance across GPU and edge devices">
+      
+      
+      
+        <link rel="canonical" href="https://jmolleda.github.io/yolo-v12v26-seg-edge/train_results_report/">
+      
+      
+        <link rel="prev" href="../known_issues/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Training Results Report - YOLO v12 v26 Segmentation Edge</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#training-benchmark-results-yolov12-vs-yolov26-for-industrial-surface-defect-segmentation" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="YOLO v12 v26 Segmentation Edge" class="md-header__button md-logo" aria-label="YOLO v12 v26 Segmentation Edge" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            YOLO v12 v26 Segmentation Edge
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Training Results Report
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/jmolleda/yolo-v12v26-seg-edge" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jmolleda/yolo-v12v26-seg-edge
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="YOLO v12 v26 Segmentation Edge" class="md-nav__button md-logo" aria-label="YOLO v12 v26 Segmentation Edge" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    YOLO v12 v26 Segmentation Edge
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/jmolleda/yolo-v12v26-seg-edge" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jmolleda/yolo-v12v26-seg-edge
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../experiments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Experimental Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dashboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Results Dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to Run
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../orchestrator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hyperparameters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hyperparameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../class_imbalance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Class Imbalance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../known_issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Training Results Report
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Training Results Report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#abstract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Abstract
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Introduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-dataset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Dataset
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Dataset">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-class-distribution-training-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Class Distribution (Training Set)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-experimental-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Experimental Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Experimental Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-hyperparameter-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Hyperparameter Protocol
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-experiment-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Experiment Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-evaluation-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Evaluation Metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-experiment-1-core-comparison-yolov12-vs-yolov26-segmentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Experiment 1: Core Comparison — YOLOv12 vs YOLOv26 Segmentation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Experiment 1: Core Comparison — YOLOv12 vs YOLOv26 Segmentation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Results
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.1 Results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#table-1-segmentation-accuracy-and-speed-all-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table 1. Segmentation accuracy and speed — all models
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-architecture-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Architecture Comparison
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-pretrained-vs-scratch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Pretrained vs Scratch
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.3 Pretrained vs Scratch">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#table-2-pretrained-lift-over-scratch-map50-pretrained-scratch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table 2. Pretrained lift over scratch (ΔmAP50 = pretrained − scratch)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-training-convergence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 Training Convergence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-accuracy-scaling-with-model-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 Accuracy Scaling with Model Size
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-experiment-2-detection-vs-segmentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Experiment 2: Detection vs Segmentation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Experiment 2: Detection vs Segmentation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Results
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5.1 Results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#table-3-detection-vs-segmentation-accuracy-map50-and-speed-fps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table 3. Detection vs segmentation accuracy (mAP50) and speed (FPS)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-yolov12-negligible-task-head-effect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 YOLOv12: Negligible Task Head Effect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-yolov26-pretrained-segmentation-strongly-outperforms-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 YOLOv26 Pretrained: Segmentation Strongly Outperforms Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-yolov26-scratch-detection-overtakes-segmentation-at-larger-sizes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 YOLOv26 Scratch: Detection Overtakes Segmentation at Larger Sizes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-experiment-3-class-imbalance-weighted-sampling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Experiment 3: Class Imbalance — Weighted Sampling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Experiment 3: Class Imbalance — Weighted Sampling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-methodology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 Methodology
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 Results
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6.2 Results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#table-4-weighted-sampling-effect-map50-balanced-baseline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table 4. Weighted sampling effect (ΔmAP50 = balanced − baseline)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-experiment-4-input-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Experiment 4: Input Resolution
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Experiment 4: Input Resolution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 Results
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7.1 Results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#table-5-map50-and-fps-across-input-resolutions-yolov26-pretrained" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table 5. mAP50 and FPS across input resolutions — YOLOv26 pretrained
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#table-6-map50-and-fps-across-input-resolutions-yolov12-scratch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table 6. mAP50 and FPS across input resolutions — YOLOv12 scratch
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-resolution-accuracy-trade-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Resolution-Accuracy Trade-off
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-yolov12-large-scratch-anomaly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 YOLOv12 Large Scratch Anomaly
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#74-speed-scaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.4 Speed Scaling
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-per-class-accuracy-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Per-class Accuracy Analysis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Per-class Accuracy Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81-class-level-results-core-comparison-pretrained-segmentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.1 Class-level Results (Core Comparison, Pretrained Segmentation)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8.1 Class-level Results (Core Comparison, Pretrained Segmentation)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#table-7-map50-per-class-yolov12-pretrained" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table 7. mAP50 per class — YOLOv12 pretrained
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#table-8-map50-per-class-yolov26-pretrained" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table 8. mAP50 per class — YOLOv26 pretrained
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#82-class-difficulty-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2 Class Difficulty Analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#83-scaling-effects-per-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.3 Scaling Effects per Class
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-discussion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Discussion
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. Discussion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#91-architecture-recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.1 Architecture Recommendations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#92-the-iv-6-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.2 The IV-6 Problem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#93-resolution-and-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.3 Resolution and Deployment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#94-limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.4 Limitations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-conclusions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Conclusions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-training-duration-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix: Training Duration Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="training-benchmark-results-yolov12-vs-yolov26-for-industrial-surface-defect-segmentation">Training Benchmark Results: YOLOv12 vs YOLOv26 for Industrial Surface Defect Segmentation</h1>
+<p><strong>Platform:</strong> NVIDIA RTX 5090 · <strong>Framework:</strong> Ultralytics 8.4.26 · <strong>Date:</strong> April 2026<br />
+<strong>Author:</strong> jmolleda</p>
+<hr />
+<h2 id="abstract">Abstract</h2>
+<p>This report presents the results of a systematic training benchmark comparing two recent one-stage object detection architectures — YOLOv12 and YOLOv26 — applied to surface defect instance segmentation on an industrial surface imaging dataset. Forty-eight training configurations were evaluated across four structured experiments: (1) core accuracy and speed comparison between architectures at four model sizes; (2) detection versus segmentation head performance; (3) the effect of weighted sampling for class imbalance correction; and (4) the impact of input resolution on accuracy and throughput. All training was conducted on an NVIDIA RTX 5090 GPU with a shared hyperparameter protocol and early stopping. Results show that YOLOv26 achieves the highest overall segmentation accuracy (mAP50 = 0.527 at medium size, pretrained), while YOLOv12 exhibits superior robustness when trained from scratch. The dataset presents a severe class imbalance that the weighted sampler only partially addresses. Input resolution of 640 px consistently represents the optimal accuracy-throughput trade-off, with a systematic accuracy collapse at 1280 px.</p>
+<hr />
+<h2 id="1-introduction">1. Introduction</h2>
+<p>Automated surface defect inspection using computer vision is a high-value application in industrial quality control. Surface images contain multiple defect types with different morphologies, frequencies, and severity levels. Instance segmentation — which provides both bounding boxes and pixel-level masks — is the preferred output format for defect grading, as it enables measurement of defect geometry.</p>
+<p>YOLOv12 and YOLOv26 represent two concurrent architectural directions from the Ultralytics ecosystem. YOLOv12 introduces an attention-based backbone (replacing C2f blocks with A-ATSS), while YOLOv26 retains a CNN-centric CSP design optimised for speed. Both are available at four model sizes (nano, small, medium, large), enabling systematic evaluation of the accuracy-efficiency trade-off.</p>
+<p>This benchmark addresses four research questions:</p>
+<ol>
+<li><strong>RQ1 — Architecture:</strong> Does YOLOv12 or YOLOv26 produce better segmentation accuracy, and is there a size-dependent interaction?</li>
+<li><strong>RQ2 — Task head:</strong> Does adding a segmentation head over a detection backbone reduce accuracy or speed on this dataset?</li>
+<li><strong>RQ3 — Class imbalance:</strong> Does inverse-frequency weighted sampling improve detection of minority defect classes?</li>
+<li><strong>RQ4 — Resolution:</strong> What is the accuracy-throughput trade-off across 320, 640, and 1280 px input sizes?</li>
+</ol>
+<hr />
+<h2 id="2-dataset">2. Dataset</h2>
+<p>The dataset consists of surface images annotated for instance segmentation across eight defect categories.</p>
+<table>
+<thead>
+<tr>
+<th>Split</th>
+<th>Images</th>
+<th>Labels</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Train</td>
+<td>2,188</td>
+<td>2,188</td>
+</tr>
+<tr>
+<td>Validation</td>
+<td>624</td>
+<td>624</td>
+</tr>
+<tr>
+<td>Test</td>
+<td>285</td>
+<td>285</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>3,097</strong></td>
+<td><strong>3,097</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="21-class-distribution-training-set">2.1 Class Distribution (Training Set)</h3>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Instances</th>
+<th>Frequency</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Solda</td>
+<td>2,536</td>
+<td>26.9%</td>
+</tr>
+<tr>
+<td>IV-2</td>
+<td>2,224</td>
+<td>23.6%</td>
+</tr>
+<tr>
+<td>IV-1B</td>
+<td>1,920</td>
+<td>20.4%</td>
+</tr>
+<tr>
+<td>IV-4</td>
+<td>1,108</td>
+<td>11.8%</td>
+</tr>
+<tr>
+<td>IV-1A</td>
+<td>774</td>
+<td>8.2%</td>
+</tr>
+<tr>
+<td>IV-3</td>
+<td>393</td>
+<td>4.2%</td>
+</tr>
+<tr>
+<td>IV-6</td>
+<td>250</td>
+<td>2.7%</td>
+</tr>
+<tr>
+<td>IV-5</td>
+<td>218</td>
+<td>2.3%</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>9,423</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>The dataset is severely imbalanced. The three majority classes (Solda, IV-2, IV-1B) account for 70.9% of all instances, while the two rarest (IV-5, IV-6) together represent only 5.0%. The imbalance ratio between the most and least frequent classes is approximately 11.6:1 (Solda vs IV-5).</p>
+<hr />
+<h2 id="3-experimental-design">3. Experimental Design</h2>
+<h3 id="31-hyperparameter-protocol">3.1 Hyperparameter Protocol</h3>
+<p>All models share a common hyperparameter configuration:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Max epochs</td>
+<td>1,000</td>
+<td>Upper bound; early stopping applies</td>
+</tr>
+<tr>
+<td>Early stopping patience</td>
+<td>50</td>
+<td>Avoids overfitting; terminates when mAP50 does not improve for 50 epochs</td>
+</tr>
+<tr>
+<td>Optimiser</td>
+<td>AdamW</td>
+<td>Adaptive learning with decoupled weight decay</td>
+</tr>
+<tr>
+<td>Base learning rate (lr0)</td>
+<td>0.0005 (yolo12) / 0.001 (yolo26)</td>
+<td>Architecture-dependent default</td>
+</tr>
+<tr>
+<td>LR schedule</td>
+<td>Cosine annealing</td>
+<td>Smooth decay to zero</td>
+</tr>
+<tr>
+<td>Weight decay</td>
+<td>0.0005</td>
+<td>L2 regularisation</td>
+</tr>
+<tr>
+<td>Image size</td>
+<td>640 px</td>
+<td>Default; varied in Experiment 4</td>
+</tr>
+<tr>
+<td>Batch size</td>
+<td>-1 (auto)</td>
+<td>GPU memory-adaptive</td>
+</tr>
+<tr>
+<td>Mosaic augmentation</td>
+<td>1.0</td>
+<td>Enabled throughout training</td>
+</tr>
+<tr>
+<td>Close mosaic (final N epochs)</td>
+<td>50</td>
+<td>Disabled in last 50 epochs for stable convergence</td>
+</tr>
+<tr>
+<td>Mixup</td>
+<td>0.15</td>
+<td>Mild blending augmentation</td>
+</tr>
+<tr>
+<td>Flip up/down</td>
+<td>0.5</td>
+<td>Appropriate for surface images (no canonical orientation)</td>
+</tr>
+<tr>
+<td>Flip left/right</td>
+<td>0.5</td>
+<td></td>
+</tr>
+<tr>
+<td>Scale jitter</td>
+<td>0.6</td>
+<td></td>
+</tr>
+<tr>
+<td>Rotation</td>
+<td>25°</td>
+<td></td>
+</tr>
+<tr>
+<td>Shear</td>
+<td>5°</td>
+<td></td>
+</tr>
+<tr>
+<td>HSV augmentation</td>
+<td>H=0.015, S=0.7, V=0.4</td>
+<td>Colour-space perturbation</td>
+</tr>
+<tr>
+<td>Perspective</td>
+<td>0.0005</td>
+<td>Mild projective distortion</td>
+</tr>
+<tr>
+<td>Copy-paste</td>
+<td>0.5</td>
+<td>Instance-level augmentation</td>
+</tr>
+</tbody>
+</table>
+<h3 id="32-experiment-overview">3.2 Experiment Overview</h3>
+<table>
+<thead>
+<tr>
+<th>Experiment</th>
+<th>Models</th>
+<th>Configurations</th>
+<th>Total runs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 — Core comparison</td>
+<td>YOLOv12, YOLOv26</td>
+<td>4 sizes × 2 approaches (seg)</td>
+<td>16</td>
+</tr>
+<tr>
+<td>2 — Detection vs segmentation</td>
+<td>YOLOv12, YOLOv26</td>
+<td>4 sizes × 2 approaches (det)</td>
+<td>16</td>
+</tr>
+<tr>
+<td>3 — Class imbalance</td>
+<td>YOLOv12, YOLOv26</td>
+<td>4 sizes × 2 approaches (seg, balanced)</td>
+<td>16</td>
+</tr>
+<tr>
+<td>4 — Input size</td>
+<td>YOLOv12 scratch, YOLOv26 pretrained</td>
+<td>4 sizes × 2 resolutions (320, 1280)</td>
+<td>16</td>
+</tr>
+</tbody>
+</table>
+<p>The 640 px segmentation results from Experiment 1 serve as the baseline for Experiments 3 and 4.</p>
+<h3 id="33-evaluation-metrics">3.3 Evaluation Metrics</h3>
+<ul>
+<li><strong>mAP50:</strong> Mean Average Precision at IoU threshold 0.50. The primary accuracy metric.</li>
+<li><strong>mAP50-95:</strong> Mean Average Precision averaged over IoU thresholds 0.50–0.95 in steps of 0.05. Stricter metric capturing mask quality.</li>
+<li><strong>Precision / Recall:</strong> Mean across classes at the optimal confidence threshold.</li>
+<li><strong>FPS:</strong> Frames per second at inference (PyTorch FP32, batch size 1).</li>
+<li><strong>Inference latency (ms/img):</strong> Reported as the Ultralytics-measured inference phase excluding preprocessing and postprocessing.</li>
+</ul>
+<hr />
+<h2 id="4-experiment-1-core-comparison-yolov12-vs-yolov26-segmentation">4. Experiment 1: Core Comparison — YOLOv12 vs YOLOv26 Segmentation</h2>
+<h3 id="41-results">4.1 Results</h3>
+<h4 id="table-1-segmentation-accuracy-and-speed-all-models">Table 1. Segmentation accuracy and speed — all models</h4>
+<table>
+<thead>
+<tr>
+<th>Architecture</th>
+<th>Size</th>
+<th>Approach</th>
+<th>mAP50</th>
+<th>mAP50-95</th>
+<th>Precision</th>
+<th>Recall</th>
+<th>FPS</th>
+<th>ms/img</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>YOLOv12</td>
+<td>nano</td>
+<td>pretrained</td>
+<td>0.4995</td>
+<td>0.3083</td>
+<td>0.5346</td>
+<td>0.5227</td>
+<td>797.9</td>
+<td>0.62</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>small</td>
+<td>pretrained</td>
+<td>0.5123</td>
+<td>0.3199</td>
+<td>0.5880</td>
+<td>0.5157</td>
+<td>560.1</td>
+<td>1.18</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>medium</td>
+<td>pretrained</td>
+<td>0.5158</td>
+<td>0.3245</td>
+<td>0.5690</td>
+<td>0.5291</td>
+<td>329.4</td>
+<td>2.35</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>large</td>
+<td>pretrained</td>
+<td>0.5267</td>
+<td>0.3310</td>
+<td>0.5652</td>
+<td>0.5446</td>
+<td>239.0</td>
+<td>3.54</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>nano</td>
+<td>scratch</td>
+<td>0.4904</td>
+<td>0.3031</td>
+<td>0.5548</td>
+<td>0.4917</td>
+<td>636.1</td>
+<td>0.76</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>small</td>
+<td>scratch</td>
+<td>0.5001</td>
+<td>0.3054</td>
+<td>0.5747</td>
+<td>0.4947</td>
+<td>450.8</td>
+<td>1.40</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>medium</td>
+<td>scratch</td>
+<td>0.5162</td>
+<td>0.3218</td>
+<td>0.5368</td>
+<td>0.5294</td>
+<td>259.4</td>
+<td>3.00</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>large</td>
+<td>scratch</td>
+<td>0.5177</td>
+<td>0.3283</td>
+<td>0.5996</td>
+<td>0.5053</td>
+<td>202.6</td>
+<td>4.19</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>nano</td>
+<td>pretrained</td>
+<td>0.4907</td>
+<td>0.3062</td>
+<td>0.5716</td>
+<td>0.4815</td>
+<td>802.1</td>
+<td>0.71</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>small</td>
+<td>pretrained</td>
+<td>0.5136</td>
+<td>0.3211</td>
+<td>0.5603</td>
+<td>0.5107</td>
+<td>602.7</td>
+<td>1.12</td>
+</tr>
+<tr>
+<td><strong>YOLOv26</strong></td>
+<td><strong>medium</strong></td>
+<td><strong>pretrained</strong></td>
+<td><strong>0.5271</strong></td>
+<td><strong>0.3366</strong></td>
+<td><strong>0.5371</strong></td>
+<td><strong>0.5572</strong></td>
+<td><strong>322.1</strong></td>
+<td><strong>2.52</strong></td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>large</td>
+<td>pretrained</td>
+<td>0.5231</td>
+<td>0.3334</td>
+<td>0.5909</td>
+<td>0.4941</td>
+<td>281.0</td>
+<td>2.95</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>nano</td>
+<td>scratch</td>
+<td>0.4652</td>
+<td>0.2775</td>
+<td>0.5464</td>
+<td>0.4657</td>
+<td>787.8</td>
+<td>0.70</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>small</td>
+<td>scratch</td>
+<td>0.4960</td>
+<td>0.2993</td>
+<td>0.5888</td>
+<td>0.4849</td>
+<td>578.9</td>
+<td>1.11</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>medium</td>
+<td>scratch</td>
+<td>0.4953</td>
+<td>0.3034</td>
+<td>0.5610</td>
+<td>0.4928</td>
+<td>320.8</td>
+<td>2.55</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>large</td>
+<td>scratch</td>
+<td>0.4756</td>
+<td>0.2906</td>
+<td>0.4942</td>
+<td>0.5085</td>
+<td>281.6</td>
+<td>2.95</td>
+</tr>
+</tbody>
+</table>
+<h3 id="42-architecture-comparison">4.2 Architecture Comparison</h3>
+<p>At the nano size, YOLOv12 pretrained marginally outperforms YOLOv26 pretrained (0.4995 vs 0.4907, Δ = −0.009). At small size the gap closes (0.5123 vs 0.5136, Δ = +0.001). At medium size YOLOv26 takes a clear lead (0.5158 vs 0.5271, Δ = +0.011). At large size YOLOv12 recovers slightly (0.5267 vs 0.5231, Δ = −0.004). There is therefore no consistent accuracy winner: the two architectures are competitive throughout the size range, with YOLOv26 having a slight advantage at medium scale.</p>
+<p>Regarding throughput, YOLOv26 is equal or faster than YOLOv12 at all sizes except medium (322 vs 329 FPS, a negligible difference of 7 FPS). The largest FPS advantage for YOLOv26 is at small size (+43 FPS, 8% faster). The nano models of both architectures approach 800 FPS, while large models drop to approximately 240–281 FPS.</p>
+<h3 id="43-pretrained-vs-scratch">4.3 Pretrained vs Scratch</h3>
+<h4 id="table-2-pretrained-lift-over-scratch-map50-pretrained-scratch">Table 2. Pretrained lift over scratch (ΔmAP50 = pretrained − scratch)</h4>
+<table>
+<thead>
+<tr>
+<th>Architecture</th>
+<th>Nano</th>
+<th>Small</th>
+<th>Medium</th>
+<th>Large</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>YOLOv12</td>
+<td>+0.009</td>
+<td>+0.012</td>
+<td>−0.000</td>
+<td>+0.009</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>+0.026</td>
+<td>+0.018</td>
+<td><strong>+0.032</strong></td>
+<td><strong>+0.048</strong></td>
+</tr>
+</tbody>
+</table>
+<p>This is the most architecturally significant finding in Experiment 1. <strong>YOLOv12 trained from scratch achieves nearly the same accuracy as pretrained</strong>, with a maximum lift of 1.2 pp at small size and a negligible difference at medium (pretrained is actually 0.0004 below scratch). In contrast, <strong>YOLOv26 depends substantially on ImageNet-pretrained weights</strong>, with lifts of 2.6 pp at nano rising to 4.8 pp at large. </p>
+<p>This divergence is consistent with the architectural differences between the two models: YOLOv12's attention-based backbone may provide stronger inductive biases for learning local patterns from small datasets, allowing it to reach similar performance with or without pretraining. YOLOv26's CNN-centric backbone relies more heavily on learned low-level filters that initialise better from natural image pretraining.</p>
+<p>From a practical standpoint, this finding has a significant operational implication: <strong>YOLOv12 can be retrained from scratch on new defect categories or datasets without access to pretrained weights</strong> and without a meaningful accuracy penalty, while YOLOv26 should always be initialised from pretrained weights.</p>
+<h3 id="44-training-convergence">4.4 Training Convergence</h3>
+<p>Models trained with pretrained weights consistently converged faster than scratch-trained equivalents:</p>
+<table>
+<thead>
+<tr>
+<th>Architecture</th>
+<th>Size</th>
+<th>Epochs (pretrained)</th>
+<th>Epochs (scratch)</th>
+<th>Scratch overhead</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>YOLOv12</td>
+<td>nano</td>
+<td>292</td>
+<td>564</td>
+<td>+93%</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>small</td>
+<td>272</td>
+<td>354</td>
+<td>+30%</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>medium</td>
+<td>269</td>
+<td>379</td>
+<td>+41%</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>large</td>
+<td>244</td>
+<td>382</td>
+<td>+57%</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>nano</td>
+<td>388</td>
+<td>614</td>
+<td>+58%</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>small</td>
+<td>318</td>
+<td>742</td>
+<td>+133%</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>medium</td>
+<td>374</td>
+<td>582</td>
+<td>+56%</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>large</td>
+<td>365</td>
+<td>371</td>
+<td>+2%</td>
+</tr>
+</tbody>
+</table>
+<p>Scratch training requires significantly more epochs before early stopping triggers. YOLOv26 small scratch is the extreme case at 742 epochs (133% more than pretrained), reflecting the need for the backbone to learn fundamental visual representations from random initialisation.</p>
+<h3 id="45-accuracy-scaling-with-model-size">4.5 Accuracy Scaling with Model Size</h3>
+<p>Both architectures show diminishing returns as model size increases. The mAP50 gain from nano to large is:</p>
+<ul>
+<li><strong>YOLOv12 pretrained:</strong> 0.4995 → 0.5267, a gain of <strong>2.72 pp</strong> over a ~12× increase in model parameters</li>
+<li><strong>YOLOv26 pretrained:</strong> 0.4907 → 0.5231, a gain of <strong>3.24 pp</strong> over the same parameter scale-up</li>
+</ul>
+<p>The marginal gain from medium to large is small for both: +0.011 pp (YOLOv12) and −0.004 pp (YOLOv26, where medium actually outperforms large). This suggests that the dataset may be approaching the capacity ceiling for these architectures at the medium scale — additional model size offers little benefit and may introduce overfitting risk.</p>
+<hr />
+<h2 id="5-experiment-2-detection-vs-segmentation">5. Experiment 2: Detection vs Segmentation</h2>
+<h3 id="51-results">5.1 Results</h3>
+<h4 id="table-3-detection-vs-segmentation-accuracy-map50-and-speed-fps">Table 3. Detection vs segmentation accuracy (mAP50) and speed (FPS)</h4>
+<table>
+<thead>
+<tr>
+<th>Architecture</th>
+<th>Size</th>
+<th>Approach</th>
+<th>Det mAP50</th>
+<th>Seg mAP50</th>
+<th>Δ (det−seg)</th>
+<th>Det FPS</th>
+<th>Seg FPS</th>
+<th>ΔFPS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>YOLOv12</td>
+<td>nano</td>
+<td>pretrained</td>
+<td>0.5009</td>
+<td>0.4995</td>
+<td>+0.001</td>
+<td>780.5</td>
+<td>797.9</td>
+<td>−17</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>small</td>
+<td>pretrained</td>
+<td>0.5154</td>
+<td>0.5123</td>
+<td>+0.003</td>
+<td>531.6</td>
+<td>560.1</td>
+<td>−29</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>medium</td>
+<td>pretrained</td>
+<td>0.5237</td>
+<td>0.5158</td>
+<td>+0.008</td>
+<td>328.2</td>
+<td>329.4</td>
+<td>−1</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>large</td>
+<td>pretrained</td>
+<td>0.5283</td>
+<td>0.5267</td>
+<td>+0.002</td>
+<td>238.6</td>
+<td>239.0</td>
+<td>+0</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>nano</td>
+<td>scratch</td>
+<td>0.4827</td>
+<td>0.4904</td>
+<td>−0.008</td>
+<td>796.6</td>
+<td>636.1</td>
+<td>+161</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>small</td>
+<td>scratch</td>
+<td>0.4989</td>
+<td>0.5001</td>
+<td>−0.001</td>
+<td>524.9</td>
+<td>450.8</td>
+<td>+74</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>medium</td>
+<td>scratch</td>
+<td>0.5111</td>
+<td>0.5162</td>
+<td>−0.005</td>
+<td>324.4</td>
+<td>259.4</td>
+<td>+65</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>large</td>
+<td>scratch</td>
+<td>0.5121</td>
+<td>0.5177</td>
+<td>−0.006</td>
+<td>237.2</td>
+<td>202.6</td>
+<td>+35</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>nano</td>
+<td>pretrained</td>
+<td>0.4882</td>
+<td>0.4907</td>
+<td>−0.003</td>
+<td>1,096.2</td>
+<td>802.1</td>
+<td>+294</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>small</td>
+<td>pretrained</td>
+<td>0.4979</td>
+<td>0.5136</td>
+<td><strong>−0.016</strong></td>
+<td>773.7</td>
+<td>602.7</td>
+<td>+171</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>medium</td>
+<td>pretrained</td>
+<td>0.5047</td>
+<td>0.5271</td>
+<td><strong>−0.022</strong></td>
+<td>440.8</td>
+<td>322.1</td>
+<td>+119</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>large</td>
+<td>pretrained</td>
+<td>0.5039</td>
+<td>0.5231</td>
+<td><strong>−0.019</strong></td>
+<td>376.3</td>
+<td>281.0</td>
+<td>+95</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>nano</td>
+<td>scratch</td>
+<td>0.4723</td>
+<td>0.4652</td>
+<td>+0.007</td>
+<td>1,191.8</td>
+<td>787.8</td>
+<td>+404</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>small</td>
+<td>scratch</td>
+<td>0.4905</td>
+<td>0.4960</td>
+<td>−0.006</td>
+<td>747.9</td>
+<td>578.9</td>
+<td>+169</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>medium</td>
+<td>scratch</td>
+<td>0.5190</td>
+<td>0.4953</td>
+<td><strong>+0.024</strong></td>
+<td>447.2</td>
+<td>320.8</td>
+<td>+126</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>large</td>
+<td>scratch</td>
+<td>0.5070</td>
+<td>0.4756</td>
+<td><strong>+0.031</strong></td>
+<td>373.6</td>
+<td>281.6</td>
+<td>+92</td>
+</tr>
+</tbody>
+</table>
+<h3 id="52-yolov12-negligible-task-head-effect">5.2 YOLOv12: Negligible Task Head Effect</h3>
+<p>For YOLOv12 pretrained, detection outperforms segmentation by 0.001–0.008 mAP50, and the speed difference is essentially zero (within ±30 FPS, less than 6%). For YOLOv12 scratch, the direction reverses: segmentation outperforms detection by 0.001–0.008 pp. In both cases, the differences are within the noise of a single training run.</p>
+<p><strong>The practical conclusion is clear: for YOLOv12, the segmentation head adds no meaningful cost.</strong> Given that segmentation provides substantially richer output (pixel-level masks vs bounding boxes) at negligible accuracy and latency overhead, the segmentation variant is unambiguously preferable for surface defect inspection.</p>
+<h3 id="53-yolov26-pretrained-segmentation-strongly-outperforms-detection">5.3 YOLOv26 Pretrained: Segmentation Strongly Outperforms Detection</h3>
+<p>For YOLOv26 pretrained, the picture is qualitatively different. Segmentation outperforms detection by 1.6–2.2 pp mAP50 at small, medium, and large sizes. The gain is largest at medium (0.5271 vs 0.5047, Δ = −0.022). The nano case is near-zero (−0.003).</p>
+<p>This result is counterintuitive: the detection-trained model is evaluated on the same validation set with the same mAP50 metric on bounding boxes, yet segmentation training leads to higher detection AP. The explanation is that <strong>pixel-level supervision provides richer gradient signal during training</strong>, forcing the backbone to learn better spatial representations. The segmentation head effectively regularises the backbone, producing features more discriminative for localisation than a detection-only objective.</p>
+<p>The cost of this improved accuracy is substantial throughput reduction: 95–294 FPS less than the detection equivalent, representing a 25–37% speed penalty.</p>
+<h3 id="54-yolov26-scratch-detection-overtakes-segmentation-at-larger-sizes">5.4 YOLOv26 Scratch: Detection Overtakes Segmentation at Larger Sizes</h3>
+<p>For YOLOv26 scratch at medium and large sizes, detection outperforms segmentation by 2.4–3.1 pp. This reversal (relative to the pretrained result) suggests that <strong>without pretrained weights, YOLOv26 cannot effectively learn the segmentation head and the backbone jointly from scratch</strong> — the additional complexity of mask prediction interferes with backbone convergence. With pretrained features, the backbone is already well-initialised and the segmentation head adds discriminative capacity; without pretraining, it becomes a burden.</p>
+<hr />
+<h2 id="6-experiment-3-class-imbalance-weighted-sampling">6. Experiment 3: Class Imbalance — Weighted Sampling</h2>
+<h3 id="61-methodology">6.1 Methodology</h3>
+<p>A custom inverse-frequency weighted sampler was applied to the training dataloader. For each image, a weight equal to the maximum inverse-class-frequency among its annotated classes was computed. Images containing rare-class instances were therefore sampled proportionally more often, without changing the effective epoch length.</p>
+<p>The sampler was implemented as a monkey-patch of <code>ultralytics.data.build.build_dataloader</code>. A data integrity issue initially affected one model: <code>yolo26_seg_medium_pretrained_balanced</code> produced results pixel-identical to the unbalanced baseline in a first run, indicating a silent sampler failure caused by sequential process state pollution. The model was subsequently rerun in an isolated Python process, confirming the sampler applied correctly (mAP50 = 0.5210, distinct from the baseline 0.5271). All 16 balanced configurations are now valid.</p>
+<h3 id="62-results">6.2 Results</h3>
+<h4 id="table-4-weighted-sampling-effect-map50-balanced-baseline">Table 4. Weighted sampling effect (ΔmAP50 = balanced − baseline)</h4>
+<table>
+<thead>
+<tr>
+<th>Architecture</th>
+<th>Size</th>
+<th>Approach</th>
+<th>Baseline</th>
+<th>Balanced</th>
+<th>Δ</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>YOLOv12</td>
+<td>nano</td>
+<td>pretrained</td>
+<td>0.4995</td>
+<td>0.4995</td>
+<td>0.000</td>
+<td>Neutral</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>small</td>
+<td>pretrained</td>
+<td>0.5123</td>
+<td>0.5145</td>
+<td>+0.002</td>
+<td>Minimal gain</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>medium</td>
+<td>pretrained</td>
+<td>0.5158</td>
+<td>0.5158</td>
+<td>0.000</td>
+<td>Neutral</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>large</td>
+<td>pretrained</td>
+<td>0.5267</td>
+<td>0.5205</td>
+<td><strong>−0.006</strong></td>
+<td>Hurt</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>nano</td>
+<td>scratch</td>
+<td>0.4904</td>
+<td>0.4904</td>
+<td>0.000</td>
+<td>Neutral</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>small</td>
+<td>scratch</td>
+<td>0.5001</td>
+<td>0.5027</td>
+<td>+0.003</td>
+<td>Minimal gain</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>medium</td>
+<td>scratch</td>
+<td>0.5162</td>
+<td>0.5176</td>
+<td>+0.001</td>
+<td>Neutral</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>large</td>
+<td>scratch</td>
+<td>0.5177</td>
+<td>0.5134</td>
+<td>−0.004</td>
+<td>Hurt</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>nano</td>
+<td>pretrained</td>
+<td>0.4907</td>
+<td>0.4907</td>
+<td>0.000</td>
+<td>Neutral</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>small</td>
+<td>pretrained</td>
+<td>0.5136</td>
+<td>0.5202</td>
+<td><strong>+0.007</strong></td>
+<td>Moderate gain</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>medium</td>
+<td>pretrained</td>
+<td>0.5271</td>
+<td>0.5210</td>
+<td><strong>−0.006</strong></td>
+<td>Hurt</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>large</td>
+<td>pretrained</td>
+<td>0.5231</td>
+<td>0.5249</td>
+<td>+0.002</td>
+<td>Minimal gain</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>nano</td>
+<td>scratch</td>
+<td>0.4652</td>
+<td>0.4652</td>
+<td>0.000</td>
+<td>Neutral</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>small</td>
+<td>scratch</td>
+<td>0.4960</td>
+<td>0.4895</td>
+<td>−0.007</td>
+<td>Hurt</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>medium</td>
+<td>scratch</td>
+<td>0.4953</td>
+<td>0.4953</td>
+<td>0.000</td>
+<td>Neutral</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>large</td>
+<td>scratch</td>
+<td>0.4756</td>
+<td>0.4952</td>
+<td><strong>+0.020</strong></td>
+<td>Strong gain</td>
+</tr>
+</tbody>
+</table>
+<h3 id="63-analysis">6.3 Analysis</h3>
+<p>The results are heterogeneous. The weighted sampler produced a measurable benefit in only 4 of 16 comparisons, a neutral effect in 7, and a negative effect in 5. This inconsistency leads to several observations:</p>
+<p><strong>Nano models are uniformly unaffected.</strong> All four nano models (two architectures, two approaches) show exactly zero delta. At the nano scale, the model capacity is likely the bottleneck rather than class representation — the model cannot learn fine-grained distinctions regardless of how often minority-class images appear.</p>
+<p><strong>Well-initialised pretrained models at medium/large scale are hurt by balancing.</strong> YOLOv26 medium pretrained loses 0.6 pp (0.5271 → 0.5210) and YOLOv12 large pretrained loses 0.6 pp (0.5267 → 0.5205). A model already carrying strong ImageNet-derived features has learned reliable representations for common classes; forcing over-representation of rare classes disrupts the training distribution without sufficiently improving minority-class detection to compensate.</p>
+<p><strong>YOLOv26 large scratch shows the strongest benefit (+0.020).</strong> When the model has no pretrained representations and the architecture relies more on learned statistics, correcting the sampling distribution appears to help the backbone avoid ignoring minority classes entirely.</p>
+<p><strong>The global mAP50 metric obscures class-level effects.</strong> Weighted sampling is designed to improve minority-class recall at the possible expense of majority-class precision. The overall mAP50 is dominated by the majority classes (Solda, IV-2, IV-1B), so modest improvements in IV-5 and IV-6 may not surface in the aggregate metric. For example, the yolo26 medium pretrained balanced run achieves IV-5 mAP50 = 0.725 (vs 0.702 baseline, +2.3 pp) and IV-6 mAP50 = 0.068 (vs 0.095 baseline, −2.7 pp) — the minority class benefit is mixed even at class level, and the overall mAP50 drops by 0.6 pp due to majority-class regression.</p>
+<p><strong>The sampler is not a reliable general-purpose intervention for this dataset.</strong> The results suggest that class imbalance correction through sampling alone is insufficient when the imbalance is as severe as 11.6:1 and the rare classes (IV-5, IV-6) represent only 5% of instances. Data augmentation targeted at minority classes (e.g., copy-paste from a curated minority pool, synthetic defect generation) would likely be more effective.</p>
+<hr />
+<h2 id="7-experiment-4-input-resolution">7. Experiment 4: Input Resolution</h2>
+<h3 id="71-results">7.1 Results</h3>
+<p>Training was performed at 640 px for all models (Experiment 1). Inference at 320 px and 1280 px was performed using the trained weights without retraining (the Ultralytics runtime resizes inputs dynamically). Two subsets were evaluated: YOLOv26 pretrained (all four sizes) and YOLOv12 scratch (all four sizes), providing 24 additional inference points.</p>
+<h4 id="table-5-map50-and-fps-across-input-resolutions-yolov26-pretrained">Table 5. mAP50 and FPS across input resolutions — YOLOv26 pretrained</h4>
+<table>
+<thead>
+<tr>
+<th>Size</th>
+<th>mAP50 @320</th>
+<th>mAP50 @640</th>
+<th>mAP50 @1280</th>
+<th>FPS @320</th>
+<th>FPS @640</th>
+<th>FPS @1280</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>nano</td>
+<td>0.4534</td>
+<td>0.4907</td>
+<td>0.3709</td>
+<td>336</td>
+<td>802</td>
+<td>193</td>
+</tr>
+<tr>
+<td>small</td>
+<td>0.4748</td>
+<td>0.5136</td>
+<td>0.3936</td>
+<td>304</td>
+<td>603</td>
+<td>143</td>
+</tr>
+<tr>
+<td>medium</td>
+<td>0.4985</td>
+<td>0.5271</td>
+<td>0.4117</td>
+<td>227</td>
+<td>322</td>
+<td>84</td>
+</tr>
+<tr>
+<td>large</td>
+<td>0.5075</td>
+<td>0.5231</td>
+<td>0.4219</td>
+<td>170</td>
+<td>281</td>
+<td>69</td>
+</tr>
+</tbody>
+</table>
+<h4 id="table-6-map50-and-fps-across-input-resolutions-yolov12-scratch">Table 6. mAP50 and FPS across input resolutions — YOLOv12 scratch</h4>
+<table>
+<thead>
+<tr>
+<th>Size</th>
+<th>mAP50 @320</th>
+<th>mAP50 @640</th>
+<th>mAP50 @1280</th>
+<th>FPS @320</th>
+<th>FPS @640</th>
+<th>FPS @1280</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>nano</td>
+<td>0.4600</td>
+<td>0.4904</td>
+<td>0.3173</td>
+<td>276</td>
+<td>636</td>
+<td>136</td>
+</tr>
+<tr>
+<td>small</td>
+<td>0.4675</td>
+<td>0.5001</td>
+<td>0.3140</td>
+<td>250</td>
+<td>451</td>
+<td>89</td>
+</tr>
+<tr>
+<td>medium</td>
+<td>0.4970</td>
+<td>0.5162</td>
+<td>0.3300</td>
+<td>206</td>
+<td>259</td>
+<td>53</td>
+</tr>
+<tr>
+<td>large</td>
+<td><strong>0.0912</strong></td>
+<td>0.5177</td>
+<td><strong>0.0316</strong></td>
+<td>138</td>
+<td>203</td>
+<td>32</td>
+</tr>
+</tbody>
+</table>
+<h3 id="72-resolution-accuracy-trade-off">7.2 Resolution-Accuracy Trade-off</h3>
+<p><strong>640 px is the optimal training and inference resolution for all models tested.</strong> Moving to 1280 px consistently degrades accuracy despite the higher spatial resolution:</p>
+<ul>
+<li>YOLOv26 pretrained: average mAP50 drop of <strong>−0.117 pp</strong> (range −0.140 to −0.101)</li>
+<li>YOLOv12 scratch (excluding the large anomaly): average drop of <strong>−0.181 pp</strong> (range −0.186 to −0.176)</li>
+</ul>
+<p>This result appears counterintuitive — higher resolution should in principle allow the model to detect smaller or finer defects. The explanation is that the models were trained at 640 px: their learned feature scale and anchor statistics are calibrated for that resolution. At 1280 px inference (without retraining at 1280 px), the effective receptive field of the backbone corresponds to a different spatial scale than what the model was trained on, causing a systematic accuracy collapse.</p>
+<p><strong>At 320 px</strong>, accuracy drops by approximately 3.7–5.1 pp for YOLOv26 pretrained and 2.3–4.9 pp for YOLOv12 scratch (excluding the large anomaly). This is a smaller absolute penalty than 1280 px, but throughput at 320 px is only 2.0–2.4× that of 640 px — a modest gain compared to the 3.8–5.0× speed advantage 640 px has over 1280 px.</p>
+<p><strong>YOLOv26 generalises better across non-native resolutions.</strong> At 1280 px, YOLOv26 pretrained retains 0.37–0.42 mAP50. At 320 px it retains 0.45–0.51 mAP50. YOLOv12 scratch shows larger accuracy degradation at both extremes, particularly at 1280 px (0.31–0.33 for nano through medium).</p>
+<h3 id="73-yolov12-large-scratch-anomaly">7.3 YOLOv12 Large Scratch Anomaly</h3>
+<p>YOLOv12 large scratch shows a catastrophic accuracy collapse at both 320 px (mAP50 = 0.091) and 1280 px (mAP50 = 0.032), while performing normally at 640 px (mAP50 = 0.518). This is qualitatively different from the gradual degradation seen in all other models. Possible causes include:</p>
+<ol>
+<li><strong>Early stopping at a suboptimal local minimum.</strong> The model may have converged at 382 epochs to a feature representation tightly coupled to the exact 640 px scale distribution. The attention mechanisms in YOLOv12's backbone are more sensitive to positional scale mismatch than CNN-based models.</li>
+<li><strong>Interaction between model capacity and resolution mismatch.</strong> At large size, the model has more capacity to overfit the training resolution.</li>
+<li><strong>Numerical instability during dynamic rescaling.</strong> The large backbone may amplify rescaling artefacts more than smaller variants.</li>
+</ol>
+<p>This anomaly underscores the importance of evaluating YOLO models at non-training resolutions with caution, particularly for attention-based architectures at their largest scale.</p>
+<h3 id="74-speed-scaling">7.4 Speed Scaling</h3>
+<p>The FPS vs resolution relationship follows an approximate inverse-quadratic law as expected (halving linear resolution roughly quadruples throughput):</p>
+<ul>
+<li>640 → 320 px: 2.0–2.5× FPS gain</li>
+<li>640 → 1280 px: 3.8–5.0× FPS loss</li>
+</ul>
+<p>YOLOv26 nano pretrained at 1280 px achieves 193 FPS with mAP50 = 0.371, making it the most viable configuration for applications requiring higher spatial resolution at the expense of accuracy.</p>
+<hr />
+<h2 id="8-per-class-accuracy-analysis">8. Per-class Accuracy Analysis</h2>
+<h3 id="81-class-level-results-core-comparison-pretrained-segmentation">8.1 Class-level Results (Core Comparison, Pretrained Segmentation)</h3>
+<h4 id="table-7-map50-per-class-yolov12-pretrained">Table 7. mAP50 per class — YOLOv12 pretrained</h4>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Nano</th>
+<th>Small</th>
+<th>Medium</th>
+<th>Large</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IV-1A</td>
+<td>0.3700</td>
+<td>0.3892</td>
+<td>0.4034</td>
+<td>0.4074</td>
+</tr>
+<tr>
+<td>IV-1B</td>
+<td>0.6490</td>
+<td>0.6428</td>
+<td>0.6436</td>
+<td>0.6635</td>
+</tr>
+<tr>
+<td>IV-2</td>
+<td>0.5406</td>
+<td>0.5650</td>
+<td>0.5717</td>
+<td>0.5767</td>
+</tr>
+<tr>
+<td>IV-3</td>
+<td>0.4413</td>
+<td>0.4402</td>
+<td>0.4980</td>
+<td>0.4602</td>
+</tr>
+<tr>
+<td>IV-4</td>
+<td>0.6452</td>
+<td>0.6627</td>
+<td>0.6802</td>
+<td>0.6900</td>
+</tr>
+<tr>
+<td>IV-5</td>
+<td>0.7090</td>
+<td>0.6830</td>
+<td>0.6870</td>
+<td>0.7148</td>
+</tr>
+<tr>
+<td><strong>IV-6</strong></td>
+<td><strong>0.0518</strong></td>
+<td><strong>0.1169</strong></td>
+<td><strong>0.0599</strong></td>
+<td><strong>0.1009</strong></td>
+</tr>
+<tr>
+<td>Solda</td>
+<td>0.5893</td>
+<td>0.5988</td>
+<td>0.5824</td>
+<td>0.6004</td>
+</tr>
+</tbody>
+</table>
+<h4 id="table-8-map50-per-class-yolov26-pretrained">Table 8. mAP50 per class — YOLOv26 pretrained</h4>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Nano</th>
+<th>Small</th>
+<th>Medium</th>
+<th>Large</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IV-1A</td>
+<td>0.3450</td>
+<td>0.3941</td>
+<td>0.3949</td>
+<td>0.4295</td>
+</tr>
+<tr>
+<td>IV-1B</td>
+<td>0.6343</td>
+<td>0.6463</td>
+<td>0.6549</td>
+<td>0.6498</td>
+</tr>
+<tr>
+<td>IV-2</td>
+<td>0.5405</td>
+<td>0.5564</td>
+<td>0.5890</td>
+<td>0.6009</td>
+</tr>
+<tr>
+<td>IV-3</td>
+<td>0.4584</td>
+<td>0.4616</td>
+<td>0.4985</td>
+<td>0.4723</td>
+</tr>
+<tr>
+<td>IV-4</td>
+<td>0.6494</td>
+<td>0.6680</td>
+<td>0.6811</td>
+<td>0.6784</td>
+</tr>
+<tr>
+<td>IV-5</td>
+<td>0.6528</td>
+<td>0.6902</td>
+<td>0.7023</td>
+<td>0.6881</td>
+</tr>
+<tr>
+<td><strong>IV-6</strong></td>
+<td><strong>0.0626</strong></td>
+<td><strong>0.0956</strong></td>
+<td><strong>0.0951</strong></td>
+<td><strong>0.0399</strong></td>
+</tr>
+<tr>
+<td>Solda</td>
+<td>0.5824</td>
+<td>0.5966</td>
+<td>0.6009</td>
+<td>0.6257</td>
+</tr>
+</tbody>
+</table>
+<h3 id="82-class-difficulty-analysis">8.2 Class Difficulty Analysis</h3>
+<p><strong>IV-6 is a critical failure class.</strong> Across all 8 pretrained segmentation models, IV-6 mAP50 ranges from 0.040 to 0.117 — far below any other class. Despite being one of the two rarest classes (2.7% of instances), it is not the least frequent (IV-5 is rarer at 2.3%) yet IV-5 achieves 0.65–0.71 mAP50 — the highest or second-highest of all classes. This rules out frequency alone as the explanation. IV-6 is intrinsically harder to localise and segment, likely due to morphological similarity to other defect types or high intra-class variability.</p>
+<p><strong>IV-5 achieves the highest mAP50 despite being the rarest class.</strong> With only 218 training instances (2.3%), IV-5 achieves 0.65–0.71 mAP50 across all models. This suggests a distinctive visual signature that the models can reliably learn from few examples.</p>
+<p><strong>IV-1A is the second most difficult class</strong> (0.35–0.43 mAP50), despite being present in 8.2% of instances. Its difficulty likely stems from morphological overlap with other defect categories.</p>
+<p><strong>The class difficulty ranking is consistent across architectures and sizes:</strong>
+IV-6 &lt; IV-1A &lt; IV-3 &lt; IV-2 &lt; Solda &lt; IV-1B &lt; IV-4 &lt; IV-5</p>
+<p>This stability across 8 different model configurations suggests that the difficulty is a function of the classes' visual properties and label quality rather than any specific architectural bias.</p>
+<h3 id="83-scaling-effects-per-class">8.3 Scaling Effects per Class</h3>
+<p>For most classes, increasing model size from nano to large produces a 0.3–0.8 pp mAP50 improvement — consistent but modest. IV-3 is an exception: both architectures show a non-monotonic pattern (medium performs better than large), suggesting that IV-3 defects occur at spatial scales well-suited to medium-size receptive fields.</p>
+<p>IV-5 shows a plateau: the nano YOLOv12 (0.709) achieves essentially the same score as the large YOLOv12 (0.715), indicating that IV-5 has a simple enough visual pattern that even the smallest model captures it effectively.</p>
+<hr />
+<h2 id="9-discussion">9. Discussion</h2>
+<h3 id="91-architecture-recommendations">9.1 Architecture Recommendations</h3>
+<p>For <strong>maximum segmentation accuracy</strong>: YOLOv26 medium pretrained (mAP50 = 0.527). The 7 FPS speed cost relative to YOLOv26 small (322 vs 603 FPS) is significant, but the 1.4 pp accuracy gain justifies it for offline or low-throughput inspection systems.</p>
+<p>For <strong>best accuracy-throughput balance</strong>: YOLOv26 small pretrained (mAP50 = 0.514, 603 FPS). This model sits at the elbow of the accuracy-speed Pareto frontier.</p>
+<p>For <strong>maximum throughput on RTX-class hardware</strong>: YOLOv26 nano detection scratch (mAP50 = 0.472, 1,192 FPS). This operates near a factor of 4× faster than the most accurate model while losing only 5.5 pp in accuracy.</p>
+<p>For <strong>environments without pretrained weights</strong> (e.g., domain-specific sensors without ImageNet-relevant pre-training): YOLOv12 medium scratch (mAP50 = 0.516, 259 FPS) is the best option, outperforming YOLOv26 medium scratch (0.495) by 2.1 pp.</p>
+<h3 id="92-the-iv-6-problem">9.2 The IV-6 Problem</h3>
+<p>The systematic failure on IV-6 is a critical finding for practical deployment. An inspection system that cannot reliably detect a specific defect type — regardless of its rarity — may not meet quality control requirements for automated surface inspection. Three interventions are warranted:</p>
+<ol>
+<li><strong>Data acquisition:</strong> Collect additional IV-6 samples. Even doubling the 250 training instances could substantially improve recall.</li>
+<li><strong>Synthetic augmentation:</strong> Copy-paste augmentation from a curated pool of IV-6 instances could multiply effective occurrence frequency.</li>
+<li><strong>Cascaded detection:</strong> Train a specialised binary classifier for IV-6 to run as a second pass on predicted negative regions.</li>
+</ol>
+<h3 id="93-resolution-and-deployment">9.3 Resolution and Deployment</h3>
+<p>The 640 px training-native resolution is appropriate for the dataset's defect scale. The accuracy collapse at 1280 px when using models trained at 640 px is a deployment risk: any pipeline that dynamically adjusts input resolution must either retrain at the target resolution or accept the accuracy penalty. For edge deployment (e.g., Jetson AGX Orin, Jetson Nano), the FPS at 640 px will be the primary constraint; the 320 px option (with ~4 pp accuracy cost) may be necessary to meet real-time requirements.</p>
+<h3 id="94-limitations">9.4 Limitations</h3>
+<ul>
+<li><strong>Single hardware platform.</strong> All results are from RTX 5090 training. Inference benchmarks on Jetson edge devices are in progress and may reveal different architectural trade-offs due to memory bandwidth and compute constraints.</li>
+<li><strong>Single training seed.</strong> No replications were performed due to compute constraints. Per-configuration variance is unknown; differences below ~0.5 pp mAP50 should be interpreted with caution.</li>
+<li><strong>No TensorRT inference.</strong> YOLOv12 TensorRT export failed due to an architecture incompatibility with ONNX export of attention layers. TensorRT results for YOLOv26 will be reported separately.</li>
+<li><strong>One excluded data point.</strong> The <code>yolo26_seg_medium_pretrained_balanced</code> rerun is in progress; the class imbalance analysis for this configuration is provisional.</li>
+<li><strong>mAP50 as primary metric.</strong> The mAP50 metric weights all classes equally regardless of clinical severity. In a real inspection system, a missed IV-6 defect may be more consequential than a false positive on Solda. A severity-weighted metric would better reflect operational requirements.</li>
+</ul>
+<hr />
+<h2 id="10-conclusions">10. Conclusions</h2>
+<p>Forty-eight training runs across four structured experiments yield the following principal findings:</p>
+<ol>
+<li>
+<p><strong>YOLOv26 medium pretrained is the highest-accuracy segmentation model (mAP50 = 0.527)</strong>, with YOLOv12 large pretrained a close second (0.527 rounded, actually 0.5267 vs 0.5271). Both architectures are competitive; no single architecture dominates across all sizes and training regimes.</p>
+</li>
+<li>
+<p><strong>YOLOv12 is remarkably robust to random initialisation.</strong> Scratch-trained YOLOv12 matches pretrained YOLOv12 to within 0.9 pp at all sizes, whereas YOLOv26 scratch loses up to 4.8 pp relative to pretrained. This makes YOLOv12 the preferred architecture for domains where pretrained weights are not available or relevant.</p>
+</li>
+<li>
+<p><strong>The segmentation head does not reduce accuracy or speed for YOLOv12</strong>, and actually improves accuracy for YOLOv26 pretrained (+1.6 to +2.2 pp). The segmentation task should be preferred over detection for this application given the added value of pixel-level masks at negligible cost.</p>
+</li>
+<li>
+<p><strong>Weighted sampling for class imbalance is inconsistent.</strong> Benefits are concentrated in YOLOv26 large scratch (+2.0 pp) and YOLOv26 small pretrained (+0.7 pp). Nano models are unaffected; large pretrained models are slightly harmed. The intervention should be applied selectively rather than universally.</p>
+</li>
+<li>
+<p><strong>640 px is the optimal training and inference resolution.</strong> 1280 px inference without retraining degrades accuracy by 10–18 pp. 320 px reduces accuracy by 4–5 pp with only a 2–2.5× speed gain.</p>
+</li>
+<li>
+<p><strong>IV-6 is an unresolved failure mode.</strong> No architecture or configuration achieves more than 0.117 mAP50 on this class. Targeted data augmentation or specialised detection is required before deployment in contexts where IV-6 detection is safety-critical.</p>
+</li>
+</ol>
+<hr />
+<h2 id="appendix-training-duration-summary">Appendix: Training Duration Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Architecture</th>
+<th>Size</th>
+<th>Approach</th>
+<th>Task</th>
+<th>Duration</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>YOLOv12</td>
+<td>nano</td>
+<td>pretrained</td>
+<td>segment</td>
+<td>0:37:38</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>small</td>
+<td>pretrained</td>
+<td>segment</td>
+<td>0:51:49</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>medium</td>
+<td>pretrained</td>
+<td>segment</td>
+<td>1:30:24</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>large</td>
+<td>pretrained</td>
+<td>segment</td>
+<td>2:24:11</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>nano</td>
+<td>scratch</td>
+<td>segment</td>
+<td>1:38:55</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>small</td>
+<td>scratch</td>
+<td>segment</td>
+<td>1:28:09</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>medium</td>
+<td>scratch</td>
+<td>segment</td>
+<td>2:46:54</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>large</td>
+<td>scratch</td>
+<td>segment</td>
+<td>4:05:12</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>nano</td>
+<td>pretrained</td>
+<td>segment</td>
+<td>1:14:34</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>small</td>
+<td>pretrained</td>
+<td>segment</td>
+<td>1:22:30</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>medium</td>
+<td>pretrained</td>
+<td>segment</td>
+<td>2:48:58</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>large</td>
+<td>pretrained</td>
+<td>segment</td>
+<td>3:32:27</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>nano</td>
+<td>scratch</td>
+<td>segment</td>
+<td>1:52:23</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>small</td>
+<td>scratch</td>
+<td>segment</td>
+<td>3:11:05</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>medium</td>
+<td>scratch</td>
+<td>segment</td>
+<td>4:22:10</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>large</td>
+<td>scratch</td>
+<td>segment</td>
+<td>3:35:40</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>nano</td>
+<td>pretrained</td>
+<td>detect</td>
+<td>0:36:53</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>small</td>
+<td>pretrained</td>
+<td>detect</td>
+<td>0:53:15</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>medium</td>
+<td>pretrained</td>
+<td>detect</td>
+<td>1:09:28</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>large</td>
+<td>pretrained</td>
+<td>detect</td>
+<td>2:53:25</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>nano</td>
+<td>scratch</td>
+<td>detect</td>
+<td>0:50:21</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>small</td>
+<td>scratch</td>
+<td>detect</td>
+<td>1:10:41</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>medium</td>
+<td>scratch</td>
+<td>detect</td>
+<td>1:57:02</td>
+</tr>
+<tr>
+<td>YOLOv12</td>
+<td>large</td>
+<td>scratch</td>
+<td>detect</td>
+<td>3:19:17</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>nano</td>
+<td>pretrained</td>
+<td>detect</td>
+<td>0:31:53</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>small</td>
+<td>pretrained</td>
+<td>detect</td>
+<td>0:42:05</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>medium</td>
+<td>pretrained</td>
+<td>detect</td>
+<td>1:32:56</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>large</td>
+<td>pretrained</td>
+<td>detect</td>
+<td>1:36:48</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>nano</td>
+<td>scratch</td>
+<td>detect</td>
+<td>0:51:25</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>small</td>
+<td>scratch</td>
+<td>detect</td>
+<td>1:05:15</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>medium</td>
+<td>scratch</td>
+<td>detect</td>
+<td>1:43:23</td>
+</tr>
+<tr>
+<td>YOLOv26</td>
+<td>large</td>
+<td>scratch</td>
+<td>detect</td>
+<td>1:36:59</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "content.code.copy", "toc.integrate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
