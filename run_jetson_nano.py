@@ -29,7 +29,7 @@ DEVICE = "jetson_nano"
 OOM_SKIP_RULES = [
     {"model_size": "large", "batch": 16},
     {"model_size": "large", "imgsz": 1280, "batch": 8},
-    {"model_size": "medium", "batch": 16, "imgsz": 1280},
+    {"model_size": "medium", "batch": 16},
 ]
 
 

@@ -107,10 +107,13 @@ def get_weights_path(experiment_name, architecture, task, model_size, approach):
     Training always happens on RTX 5090. Other devices load these weights.
     Ultralytics increments the output folder name (train -> train2 -> train3)
     when a folder already exists, so we pick the highest-numbered one.
+
+    Always uses the real 'results/' directory regardless of RESULTS_DIR_NAME
+    override (e.g. quick-test mode), since weights come from training runs.
     """
-    results_dir = get_results_dir(
-        experiment_name, architecture, task, model_size, approach, "rtx5090"
-    )
+    task_key = "seg" if task == "segment" else "det"
+    folder_name = f"{architecture}_{task_key}_{model_size}_{approach}"
+    results_dir = os.path.join(PROJECT_ROOT, "results", "rtx5090", experiment_name, folder_name)
     # Find the latest train* folder
     import glob as _glob
     train_dirs = sorted(_glob.glob(os.path.join(results_dir, "train*")))
