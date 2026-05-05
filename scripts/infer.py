@@ -88,7 +88,7 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
     if not os.path.exists(weights_path):
         raise FileNotFoundError(f"Weights not found: {weights_path}")
 
-    model = YOLO(weights_path)
+    model = YOLO(weights_path, task=task)
     model_file_size_mb = os.path.getsize(weights_path) / (1024 * 1024)
 
     # Reset peak memory tracking
