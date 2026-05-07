@@ -547,20 +547,12 @@ def build_html(training_models, inference_reports, train_reports, hw_metrics):
   @media (max-width: 1000px) {{ .charts-grid {{ grid-template-columns: 1fr; }} }}
   .timestamp {{ text-align: center; color: #475569; font-size: 0.8rem; margin-top: 20px; }}
   /* Inference table */
-  .infer-controls {{
-    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px;
-  }}
-  .infer-controls input[type=text] {{
+  #inferSearch {{
     background: #0f172a; border: 1px solid #334155; color: #e2e8f0;
     padding: 6px 12px; border-radius: 6px; font-size: 0.82rem; width: 220px;
   }}
-  .infer-controls input[type=text]::placeholder {{ color: #475569; }}
-  .infer-controls select {{
-    background: #0f172a; border: 1px solid #334155; color: #e2e8f0;
-    padding: 6px 10px; border-radius: 6px; font-size: 0.82rem;
-  }}
-  .infer-controls label {{ color: #94a3b8; font-size: 0.78rem; display: flex; align-items: center; gap: 5px; }}
-  .infer-count {{ color: #94a3b8; font-size: 0.8rem; margin-left: auto; }}
+  #inferSearch::placeholder {{ color: #475569; }}
+  .infer-count {{ color: #94a3b8; font-size: 0.8rem; }}
   #inferTable th {{ cursor: pointer; }}
   #inferTable th:hover {{ background: #1e4a7f; }}
   #inferTable th.sort-asc::after {{ content: " ▲"; }}
@@ -676,34 +668,10 @@ def build_html(training_models, inference_reports, train_reports, hw_metrics):
       <span style="color:#fbbf24">&#9632;</span>&nbsp;&ge;10&ensp;
       <span style="color:#f87171">&#9632;</span>&nbsp;&lt;10
     </p>
-    <div class="infer-controls">
-      <input type="text" id="inferSearch" placeholder="Search experiment, approach, size…" oninput="filterInfer()">
-      <label>Device:
-        <select id="fInferDevice" onchange="filterInfer()">
-          <option value="">All</option><option>rtx5090</option><option>jetson_agx</option>
-        </select>
-      </label>
-      <label>Arch:
-        <select id="fInferArch" onchange="filterInfer()">
-          <option value="">All</option><option>yolo12</option><option>yolo26</option>
-        </select>
-      </label>
-      <label>Format:
-        <select id="fInferFormat" onchange="filterInfer()">
-          <option value="">All</option><option>pytorch</option><option>tensorrt</option>
-        </select>
-      </label>
-      <label>Experiment:
-        <select id="fInferExp" onchange="filterInfer()">
-          <option value="">All</option>
-          <option value="core comparison">core comparison</option>
-          <option value="class imbalance">class imbalance</option>
-          <option value="detection vs segmentation">detection vs segmentation</option>
-          <option value="input size">input size</option>
-          <option value="batch throughput">batch throughput</option>
-        </select>
-      </label>
-      <span class="infer-count" id="inferCount"></span>
+    <div class="filters" id="inferFilters"></div>
+    <div style="margin:6px 0 10px">
+      <input type="text" id="inferSearch" placeholder="Search model, approach, size…" oninput="filterInfer()">
+      <span class="infer-count" id="inferCount" style="margin-left:10px"></span>
     </div>
     <div class="table-wrap">
       <table id="inferTable">
@@ -808,6 +776,7 @@ let trainFilters  = {{ device:'all', arch:'all', task:'all', size:'all', approac
 let overviewFilters = {{ device:'all', arch:'all', task:'all', size:'all', approach:'all', experiment:'all' }};
 let convFilters   = {{ device:'all', arch:'all', task:'all', size:'all', approach:'all', experiment:'all' }};
 let pcFilters     = {{ arch:'all', size:'all', approach:'all' }};
+let inferFilters  = {{ device:'all', arch:'all', format:'all', experiment:'all' }};
 
 document.getElementById('genTime').textContent = new Date().toLocaleString();
 
@@ -1251,26 +1220,34 @@ function buildInferRows(data) {{
 
 let inferSortCol = -1, inferSortDir = 1;
 
+function inferFilterGroups() {{
+  const devs  = [...new Set(INFER_DATA.map(m => m.device))].sort();
+  const archs = [...new Set(INFER_DATA.map(m => m.arch))].sort();
+  const fmts  = [...new Set(INFER_DATA.map(m => m.format))].sort();
+  const exps  = [...new Set(INFER_DATA.map(m => m.experiment))].sort();
+  return [
+    ['device','Device',devs],
+    ['arch','Arch',archs],
+    ['format','Format',fmts],
+    ['experiment','Exp',exps],
+  ];
+}}
+
 function renderInference() {{
   const tbody = document.getElementById('inferTableBody');
   tbody.innerHTML = buildInferRows(INFER_DATA);
-  document.getElementById('inferCount').textContent = INFER_DATA.length + ' rows';
+  filterInfer();
 }}
 
 function filterInfer() {{
-  const q    = document.getElementById('inferSearch').value.toLowerCase();
-  const fDev = document.getElementById('fInferDevice').value.toLowerCase();
-  const fArc = document.getElementById('fInferArch').value.toLowerCase();
-  const fFmt = document.getElementById('fInferFormat').value.toLowerCase();
-  const fExp = document.getElementById('fInferExp').value.toLowerCase();
+  const q = document.getElementById('inferSearch').value.toLowerCase();
   let visible = 0;
   document.querySelectorAll('#inferTableBody tr').forEach(row => {{
-    const txt = row.textContent.toLowerCase();
-    const show = (!q    || txt.includes(q))
-      && (!fDev || row.cells[0].textContent.toLowerCase().includes(fDev))
-      && (!fArc || row.cells[2].textContent.toLowerCase().includes(fArc))
-      && (!fFmt || row.cells[6].textContent.toLowerCase().includes(fFmt))
-      && (!fExp || row.cells[1].textContent.toLowerCase().includes(fExp));
+    const show = (!q || row.textContent.toLowerCase().includes(q))
+      && (inferFilters.device     === 'all' || row.cells[0].textContent.toLowerCase() === inferFilters.device)
+      && (inferFilters.arch       === 'all' || row.cells[2].textContent.toLowerCase() === inferFilters.arch)
+      && (inferFilters.format     === 'all' || row.cells[6].textContent.toLowerCase() === inferFilters.format)
+      && (inferFilters.experiment === 'all' || row.cells[1].textContent.toLowerCase().includes(inferFilters.experiment));
     row.style.display = show ? '' : 'none';
     if (show) visible++;
   }});
@@ -1609,6 +1586,7 @@ function renderResources() {{
 // ---- INIT ----
 buildFilterBar('overviewFilters', overviewFilters, trainFilterGroups(), renderOverview);
 buildFilterBar('convergenceFilters', convFilters, trainFilterGroups(), renderConvergence);
+buildFilterBar('inferFilters', inferFilters, inferFilterGroups(), filterInfer);
 buildFilterBar('perclassFilters', pcFilters, [
   ['arch','Arch',[...new Set(TRAIN_REPORTS.filter(r=>r.per_class).map(r=>r.arch))].sort()],
   ['size','Size',['nano','small','medium','large'].filter(s=>TRAIN_REPORTS.some(r=>r.per_class&&r.size===s))],
