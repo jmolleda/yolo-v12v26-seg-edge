@@ -537,15 +537,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#yolov12-pretrained-segmentation-inference-failure" class="md-nav__link">
+  <a href="#yolov12-pretrained-segmentation-trained-as-detection-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        YOLOv12 Pretrained Segmentation — Inference Failure
+        YOLOv12 Pretrained Segmentation — Trained as Detection Model
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="YOLOv12 Pretrained Segmentation — Inference Failure">
+    <nav class="md-nav" aria-label="YOLOv12 Pretrained Segmentation — Trained as Detection Model">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -582,10 +582,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#workaround" class="md-nav__link">
+  <a href="#fix" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Workaround
+        Fix
       
     </span>
   </a>
@@ -658,6 +658,56 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#jetson-orin-nano-tensorrt-int8-shows-no-speed-gain-over-fp16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jetson Orin Nano — TensorRT INT8 Shows No Speed Gain over FP16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Jetson Orin Nano — TensorRT INT8 Shows No Speed Gain over FP16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#observation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#explanation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Explanation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#impact-on-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Impact on Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -714,19 +764,20 @@
 
 
 <h1 id="known-issues">Known Issues</h1>
-<h2 id="yolov12-pretrained-segmentation-inference-failure">YOLOv12 Pretrained Segmentation — Inference Failure</h2>
-<p><strong>Affected models:</strong> <code>yolo12{n,s,m,l}</code> pretrained, segmentation task
-<strong>Affected phase:</strong> Inference benchmarking (PyTorch FP32)
-<strong>Status:</strong> Unresolved — Ultralytics bug</p>
+<h2 id="yolov12-pretrained-segmentation-trained-as-detection-model">YOLOv12 Pretrained Segmentation — Trained as Detection Model</h2>
+<p><strong>Affected models:</strong> <code>yolo12{n,s,m,l}</code> pretrained and pretrained_balanced, segmentation task
+<strong>Affected phase:</strong> Training (root cause) → inference and TRT export (downstream failures)
+<strong>Status:</strong> Unresolved — requires retraining with corrected training script</p>
 <h3 id="symptom">Symptom</h3>
+<p>PyTorch inference fails with:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>AttributeError: &#39;dict&#39; object has no attribute &#39;shape&#39;
 </code></pre></div>
-<p>Occurs inside Ultralytics 8.4.26 at <code>ultralytics/models/yolo/segment/val.py</code>, line 104:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">imgsz</span> <span class="o">=</span> <span class="p">[</span><span class="mi">4</span> <span class="o">*</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">proto</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:]]</span>  <span class="c1"># get image size from proto</span>
+<p>TensorRT export fails with:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ONNX export failure: number of output names provided (2) exceeded number of outputs (1)
 </code></pre></div>
-<p>The segmentation validator expects <code>proto</code> to be a tensor, but receives a dict when running inference on a yolo12 model loaded from a saved <code>.pt</code> file with a detection backbone used as segmentation pretrained weights.</p>
 <h3 id="root-cause">Root Cause</h3>
-<p>YOLOv12 has no official pretrained segmentation weights (<code>yolo12n-seg.pt</code> etc. do not exist in Ultralytics Hub). As a workaround, detection backbone weights (<code>yolo12n.pt</code>) are used for pretraining, and Ultralytics adapts them during training. This works during training (model is in memory with the full segmentation head), but when the trained weights are reloaded from disk for inference validation, the output format of the segmentation head differs from what the validator expects, causing the crash.</p>
+<p>YOLOv12 has no official pretrained segmentation weights (<code>yolo12n-seg.pt</code> etc. do not exist in Ultralytics Hub). The training script loaded detection backbone weights (<code>yolo12n.pt</code>) via <code>YOLO(model_config)</code> without specifying <code>task=task</code> in the constructor. Ultralytics read the embedded <code>task='detect'</code> from the checkpoint and ran training in detection mode, despite <code>task='segment'</code> being passed in <code>model.train()</code>. The resulting <code>best.pt</code> files are detection models stored in segmentation experiment folders.</p>
+<p>Evidence: <code>results.csv</code> for affected models contains only detection metric columns (<code>train/box_loss</code>, <code>train/cls_loss</code>, <code>train/dfl_loss</code>) with no segmentation columns (<code>train/seg_loss</code>, <code>metrics/mAP50(M)</code>, etc.).</p>
 <h3 id="practical-impact">Practical Impact</h3>
 <table>
 <thead>
@@ -738,35 +789,31 @@
 <tbody>
 <tr>
 <td>Training</td>
-<td>✓ Completed successfully</td>
+<td>✓ Completed (but produced detection model, not segmentation)</td>
 </tr>
 <tr>
-<td>Training metrics (mAP50, mAP50-95, per-class)</td>
-<td>✓ Available in <code>report.txt</code></td>
+<td>Training metrics (mAP50-95)</td>
+<td>⚠ Detection metrics only — not segmentation</td>
 </tr>
 <tr>
-<td>Inference timing (FPS, latency)</td>
-<td>✗ Not available</td>
+<td>PyTorch inference (segment task)</td>
+<td>✗ Fails — model output is detection dict, not seg tensor</td>
 </tr>
 <tr>
-<td>TensorRT export</td>
-<td>✗ Not attempted (no valid inference baseline)</td>
+<td>TensorRT export (segment task)</td>
+<td>✗ Fails — model has 1 output (detect), exporter expects 2 (seg)</td>
 </tr>
 </tbody>
 </table>
-<p>The 4 affected models (<code>yolo12n/s/m/l</code> pretrained seg) are excluded from inference benchmark comparisons. Their training accuracy metrics remain valid and are included in accuracy analysis.</p>
-<h3 id="workaround">Workaround</h3>
-<p>The trained weights (<code>best.pt</code>) are valid and fully usable. Inference benchmarking can be retried at any time with a different Ultralytics version without retraining:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Create a venv with a different Ultralytics version</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">ultralytics</span><span class="o">==</span>&lt;version&gt;
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Re-run inference for affected models</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>python<span class="w"> </span>scripts/infer.py<span class="w"> </span>--weights<span class="w"> </span>results/rtx5090/core_comparison/yolo12_seg_nano_pretrained/train/weights/best.pt<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span>--format<span class="w"> </span>pytorch<span class="w"> </span>--precision<span class="w"> </span>fp32<span class="w"> </span>--imgsz<span class="w"> </span><span class="m">640</span><span class="w"> </span>--batch<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span>--arch<span class="w"> </span>yolo12<span class="w"> </span>--size<span class="w"> </span>nano<span class="w"> </span>--task<span class="w"> </span>segment<span class="w"> </span>--approach<span class="w"> </span>pretrained<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span>--experiment<span class="w"> </span>core_comparison<span class="w"> </span>--device<span class="w"> </span>rtx5090
+<p>Affected experiments: <code>core_comparison</code> (4 models), <code>input_size</code> (same weights), <code>class_imbalance</code> pretrained_balanced (4 models).</p>
+<h3 id="fix">Fix</h3>
+<p>The training script requires <code>task=task</code> in the YOLO constructor so Ultralytics selects the correct model architecture before training:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Before (broken):</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">model</span> <span class="o">=</span> <span class="n">YOLO</span><span class="p">(</span><span class="n">model_config</span><span class="p">)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># After (correct):</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">model</span> <span class="o">=</span> <span class="n">YOLO</span><span class="p">(</span><span class="n">model_config</span><span class="p">,</span> <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">)</span>
 </code></pre></div>
-<p>Repeat for <code>small</code>, <code>medium</code>, <code>large</code>. The dashboard will pick up the new <code>report_*.txt</code> files automatically.</p>
+<p>These 8 model configs must be retrained on RTX 5090. The existing <code>best.pt</code> weights are detection models and cannot produce valid segmentation inference results.</p>
 <hr />
 <h2 id="weighted-sampler-silent-failure-yolo26-medium-pretrained-balanced">Weighted Sampler Silent Failure — yolo26 Medium Pretrained Balanced</h2>
 <p><strong>Affected model:</strong> <code>yolo26_seg_medium_pretrained_balanced</code> (class_imbalance experiment)
@@ -810,6 +857,40 @@
 </tr>
 </tbody>
 </table>
+<hr />
+<h2 id="jetson-orin-nano-tensorrt-int8-shows-no-speed-gain-over-fp16">Jetson Orin Nano — TensorRT INT8 Shows No Speed Gain over FP16</h2>
+<p><strong>Affected device:</strong> Jetson Orin Nano (8 GB, JP6.1, TRT 10.3.0.30)
+<strong>Affected phase:</strong> TRT inference benchmarking
+<strong>Status:</strong> Expected hardware behaviour — not a bug</p>
+<h3 id="observation">Observation</h3>
+<p>TensorRT INT8 and FP16 engines produce virtually identical inference latency (within 0.1 ms) and identical accuracy metrics (same mAP values to 4 decimal places) for all tested models on the Jetson Orin Nano.</p>
+<p>Example (yolo26 nano pretrained):</p>
+<table>
+<thead>
+<tr>
+<th>Precision</th>
+<th>inf_ms</th>
+<th>FPS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FP16</td>
+<td>14.74</td>
+<td>39.71</td>
+</tr>
+<tr>
+<td>INT8</td>
+<td>14.75</td>
+<td>39.71</td>
+</tr>
+</tbody>
+</table>
+<h3 id="explanation">Explanation</h3>
+<p>At batch=1 on Jetson Orin Nano, inference is memory-bandwidth-bound rather than compute-bound. INT8 Tensor Cores offer higher theoretical throughput, but the per-image latency is dominated by data movement and pre/post-processing (Python overhead: ~3 ms pre + 4–13 ms post per image), not raw matrix multiply speed. The INT8 advantage only materialises at higher batch sizes.</p>
+<p>Identical accuracy metrics are consistent with TRT's PTQ calibration maintaining negligible accuracy loss at INT8 for this dataset and model scale.</p>
+<h3 id="impact-on-results">Impact on Results</h3>
+<p>INT8 results are still reported separately as they confirm quantization stability. For throughput comparison, FP16 and INT8 can be treated as equivalent on this device at batch=1.</p>
 
 
 
