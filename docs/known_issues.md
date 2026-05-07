@@ -1,56 +1,54 @@
 # Known Issues
 
-## YOLOv12 Pretrained Segmentation — Inference Failure
+## YOLOv12 Pretrained Segmentation — Trained as Detection Model
 
-**Affected models:** `yolo12{n,s,m,l}` pretrained, segmentation task
-**Affected phase:** Inference benchmarking (PyTorch FP32)
-**Status:** Unresolved — Ultralytics bug
+**Affected models:** `yolo12{n,s,m,l}` pretrained and pretrained_balanced, segmentation task
+**Affected phase:** Training (root cause) → inference and TRT export (downstream failures)
+**Status:** Unresolved — requires retraining with corrected training script
 
 ### Symptom
+
+PyTorch inference fails with:
 
 ```
 AttributeError: 'dict' object has no attribute 'shape'
 ```
 
-Occurs inside Ultralytics 8.4.26 at `ultralytics/models/yolo/segment/val.py`, line 104:
+TensorRT export fails with:
 
-```python
-imgsz = [4 * x for x in proto.shape[2:]]  # get image size from proto
 ```
-
-The segmentation validator expects `proto` to be a tensor, but receives a dict when running inference on a yolo12 model loaded from a saved `.pt` file with a detection backbone used as segmentation pretrained weights.
+ONNX export failure: number of output names provided (2) exceeded number of outputs (1)
+```
 
 ### Root Cause
 
-YOLOv12 has no official pretrained segmentation weights (`yolo12n-seg.pt` etc. do not exist in Ultralytics Hub). As a workaround, detection backbone weights (`yolo12n.pt`) are used for pretraining, and Ultralytics adapts them during training. This works during training (model is in memory with the full segmentation head), but when the trained weights are reloaded from disk for inference validation, the output format of the segmentation head differs from what the validator expects, causing the crash.
+YOLOv12 has no official pretrained segmentation weights (`yolo12n-seg.pt` etc. do not exist in Ultralytics Hub). The training script loaded detection backbone weights (`yolo12n.pt`) via `YOLO(model_config)` without specifying `task=task` in the constructor. Ultralytics read the embedded `task='detect'` from the checkpoint and ran training in detection mode, despite `task='segment'` being passed in `model.train()`. The resulting `best.pt` files are detection models stored in segmentation experiment folders.
+
+Evidence: `results.csv` for affected models contains only detection metric columns (`train/box_loss`, `train/cls_loss`, `train/dfl_loss`) with no segmentation columns (`train/seg_loss`, `metrics/mAP50(M)`, etc.).
 
 ### Practical Impact
 
 | Phase | Status |
 |-------|--------|
-| Training | ✓ Completed successfully |
-| Training metrics (mAP50, mAP50-95, per-class) | ✓ Available in `report.txt` |
-| Inference timing (FPS, latency) | ✗ Not available |
-| TensorRT export | ✗ Not attempted (no valid inference baseline) |
+| Training | ✓ Completed (but produced detection model, not segmentation) |
+| Training metrics (mAP50-95) | ⚠ Detection metrics only — not segmentation |
+| PyTorch inference (segment task) | ✗ Fails — model output is detection dict, not seg tensor |
+| TensorRT export (segment task) | ✗ Fails — model has 1 output (detect), exporter expects 2 (seg) |
 
-The 4 affected models (`yolo12n/s/m/l` pretrained seg) are excluded from inference benchmark comparisons. Their training accuracy metrics remain valid and are included in accuracy analysis.
+Affected experiments: `core_comparison` (4 models), `input_size` (same weights), `class_imbalance` pretrained_balanced (4 models).
 
-### Workaround
+### Fix
 
-The trained weights (`best.pt`) are valid and fully usable. Inference benchmarking can be retried at any time with a different Ultralytics version without retraining:
+The training script requires `task=task` in the YOLO constructor so Ultralytics selects the correct model architecture before training:
 
-```bash
-# Create a venv with a different Ultralytics version
-pip install ultralytics==<version>
-
-# Re-run inference for affected models
-python scripts/infer.py --weights results/rtx5090/core_comparison/yolo12_seg_nano_pretrained/train/weights/best.pt \
-    --format pytorch --precision fp32 --imgsz 640 --batch 1 \
-    --arch yolo12 --size nano --task segment --approach pretrained \
-    --experiment core_comparison --device rtx5090
+```python
+# Before (broken):
+model = YOLO(model_config)
+# After (correct):
+model = YOLO(model_config, task=task)
 ```
 
-Repeat for `small`, `medium`, `large`. The dashboard will pick up the new `report_*.txt` files automatically.
+These 8 model configs must be retrained on RTX 5090. The existing `best.pt` weights are detection models and cannot produce valid segmentation inference results.
 
 ---
 
@@ -88,3 +86,32 @@ The rerun completed on 2026-04-05 (train3). Valid result: **mAP50 = 0.5210** (ba
 | PyTorch | 2.7.0+cu128 |
 | Python | 3.12.3 |
 | Hardware | NVIDIA RTX 5090 |
+
+---
+
+## Jetson Orin Nano — TensorRT INT8 Shows No Speed Gain over FP16
+
+**Affected device:** Jetson Orin Nano (8 GB, JP6.1, TRT 10.3.0.30)
+**Affected phase:** TRT inference benchmarking
+**Status:** Expected hardware behaviour — not a bug
+
+### Observation
+
+TensorRT INT8 and FP16 engines produce virtually identical inference latency (within 0.1 ms) and identical accuracy metrics (same mAP values to 4 decimal places) for all tested models on the Jetson Orin Nano.
+
+Example (yolo26 nano pretrained):
+
+| Precision | inf_ms | FPS |
+|-----------|--------|-----|
+| FP16 | 14.74 | 39.71 |
+| INT8 | 14.75 | 39.71 |
+
+### Explanation
+
+At batch=1 on Jetson Orin Nano, inference is memory-bandwidth-bound rather than compute-bound. INT8 Tensor Cores offer higher theoretical throughput, but the per-image latency is dominated by data movement and pre/post-processing (Python overhead: ~3 ms pre + 4–13 ms post per image), not raw matrix multiply speed. The INT8 advantage only materialises at higher batch sizes.
+
+Identical accuracy metrics are consistent with TRT's PTQ calibration maintaining negligible accuracy loss at INT8 for this dataset and model scale.
+
+### Impact on Results
+
+INT8 results are still reported separately as they confirm quantization stability. For throughput comparison, FP16 and INT8 can be treated as equivalent on this device at batch=1.
