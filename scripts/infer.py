@@ -82,7 +82,7 @@ class TegrastatsReader:
             self._proc = subprocess.Popen(
                 ["tegrastats", "--interval", str(self._interval_ms)],
                 stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                text=True
+                text=True, bufsize=1
             )
             for line in self._proc.stdout:
                 if self._stop.is_set():
