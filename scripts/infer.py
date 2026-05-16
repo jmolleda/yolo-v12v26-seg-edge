@@ -15,8 +15,12 @@ Usage:
 import argparse
 import datetime
 import os
+import re
+import subprocess
 import sys
 import statistics
+import threading
+import time
 
 import torch
 
@@ -36,22 +40,67 @@ DEFAULT_WARMUP_RUNS = 5
 DEFAULT_MEASURE_RUNS = 10
 
 
-def measure_power_jetson():
-    """Measure current power consumption on Jetson via jtop.
+class TegrastatsReader:
+    """Reads total board power from tegrastats in a background thread.
 
-    Returns:
-        Power in watts, or None if not on a Jetson / jtop unavailable.
+    Parses VIN_SYS_5V0 (total 5V input power) from tegrastats output.
+    Falls back to VDD_GPU_SOC + VDD_CPU_CV if VIN_SYS_5V0 is absent.
+    No sudo or daemon required.
     """
-    try:
-        from jtop import jtop
-        with jtop() as jetson:
-            if jetson.ok():
-                power = jetson.power
-                # jtop reports power in milliwatts for total
-                total_mw = power.get("tot", {}).get("power", 0)
-                return total_mw / 1000.0 if total_mw else None
-    except (ImportError, Exception):
-        return None
+
+    _PATTERN = re.compile(
+        r'VIN_SYS_5V0\s+(\d+)mW'
+        r'|VDD_GPU_SOC\s+(\d+)mW'
+        r'|VDD_CPU_CV\s+(\d+)mW'
+    )
+
+    def __init__(self, interval_ms=500):
+        self._interval_ms = interval_ms
+        self._samples = []
+        self._stop = threading.Event()
+        self._thread = None
+        self._proc = None
+
+    def start(self):
+        self._stop.clear()
+        self._samples = []
+        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread.start()
+
+    def stop(self):
+        self._stop.set()
+        if self._proc:
+            self._proc.terminate()
+        if self._thread:
+            self._thread.join(timeout=5)
+
+    def mean_watts(self):
+        return statistics.mean(self._samples) / 1000.0 if self._samples else None
+
+    def _run(self):
+        try:
+            self._proc = subprocess.Popen(
+                ["tegrastats", "--interval", str(self._interval_ms)],
+                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                text=True
+            )
+            for line in self._proc.stdout:
+                if self._stop.is_set():
+                    break
+                vin = gpu_soc = cpu_cv = None
+                for m in self._PATTERN.finditer(line):
+                    if m.group(1) is not None:
+                        vin = int(m.group(1))
+                    elif m.group(2) is not None:
+                        gpu_soc = int(m.group(2))
+                    elif m.group(3) is not None:
+                        cpu_cv = int(m.group(3))
+                if vin is not None:
+                    self._samples.append(vin)
+                elif gpu_soc is not None or cpu_cv is not None:
+                    self._samples.append((gpu_soc or 0) + (cpu_cv or 0))
+        except (FileNotFoundError, OSError):
+            pass
 
 
 def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
@@ -116,8 +165,12 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
     precision_values, recall_values = [], []
     per_class_data = None
 
-    # Measure power during inference (Jetsons only)
-    watts = measure_power_jetson() if device_name.startswith("jetson") else None
+    # Start power sampling for Jetson devices
+    power_reader = None
+    if device_name.startswith("jetson"):
+        power_reader = TegrastatsReader(interval_ms=500)
+        power_reader.start()
+        print("  Power sampling started (tegrastats)")
 
     for i in range(measure_runs):
         val_results = model.val(**val_kwargs)
@@ -134,6 +187,15 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
 
         print(f"  Run {i + 1}/{measure_runs}: "
               f"inf={speed.get('inference', 0.0):.2f}ms")
+
+    # Stop power sampling and compute average
+    watts = None
+    if power_reader is not None:
+        power_reader.stop()
+        watts = power_reader.mean_watts()
+        n_samples = len(power_reader._samples)
+        print(f"  Power sampling stopped ({n_samples} samples, mean={watts:.2f}W)" if watts else
+              "  Power sampling: no readings collected (tegrastats unavailable?)")
 
     # Capture peak GPU memory
     gpu_mem_peak_mb = None
