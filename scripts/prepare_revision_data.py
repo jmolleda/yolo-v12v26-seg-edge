@@ -16,7 +16,8 @@ import os
 import random
 import shutil
 
-DATA_DIR = r"D:\tmp\TFM\ICM\BenchMarks\data"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 CALIB_N = 624          # matches the size of the previous (val) calibration set
 SEED = 42
 
@@ -57,8 +58,9 @@ names: {NAMES}
 
 
 def main():
-    # 1. Clean test subset from the manifest
-    with open(os.path.join(DATA_DIR, "test_clean.txt")) as fh:
+    # 1. Clean test subset from the manifest (tracked in config/)
+    manifest = os.path.join(os.path.dirname(DATA_DIR), "config", "test_clean.txt")
+    with open(manifest) as fh:
         clean = [ln.strip() for ln in fh if ln.strip()]
     n = materialize("test_clean", "test", clean)
     print(f"test_clean: {n} images")
