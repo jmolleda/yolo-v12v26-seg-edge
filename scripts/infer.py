@@ -105,7 +105,8 @@ class TegrastatsReader:
 
 def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
                   model_size, task, approach, experiment_name, device_name,
-                  warmup_runs=DEFAULT_WARMUP_RUNS, measure_runs=DEFAULT_MEASURE_RUNS):
+                  warmup_runs=DEFAULT_WARMUP_RUNS, measure_runs=DEFAULT_MEASURE_RUNS,
+                  data_yaml_override=None):
     """Run inference benchmark with warm-up and repeated measurements.
 
     Args:
@@ -123,7 +124,7 @@ def run_inference(weights_path, fmt, precision, imgsz, batch, architecture,
     """
     start_time = datetime.datetime.now()
     machine_name = get_machine_name()
-    data_yaml = get_data_yaml_path()
+    data_yaml = data_yaml_override or get_data_yaml_path()
     fmt_precision = precision  # Save before variable is reused for accuracy metric
 
     run_label = f"{architecture} {model_size} | {fmt} {precision} | {task} | {approach}"
@@ -357,6 +358,9 @@ def main():
                         help=f"Number of warm-up runs (default: {DEFAULT_WARMUP_RUNS})")
     parser.add_argument("--runs", type=int, default=DEFAULT_MEASURE_RUNS,
                         help=f"Number of measurement runs (default: {DEFAULT_MEASURE_RUNS})")
+    parser.add_argument("--data-yaml", default=None,
+                        help="Override data yaml (e.g. data/data_test_clean.yaml "
+                             "for the leak-free test subset)")
     args = parser.parse_args()
 
     run_inference(
@@ -373,6 +377,7 @@ def main():
         device_name=args.device,
         warmup_runs=args.warmup,
         measure_runs=args.runs,
+        data_yaml_override=args.data_yaml,
     )
 
 
