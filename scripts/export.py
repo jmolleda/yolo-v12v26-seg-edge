@@ -66,6 +66,18 @@ def export_model(weights_path, precision, imgsz=640, data_yaml=None, verbose=Fal
         print(f"Build log: {log_path}")
 
     engine_path = model.export(**export_args)
+
+    # Rename to a precision-distinct filename. Ultralytics always writes
+    # best.engine regardless of precision, which caused the original campaign
+    # to silently reuse the FP16 engine for INT8 runs (export skipped as
+    # "already exported"). best_fp16.engine / best_int8.engine are unambiguous.
+    distinct_path = os.path.splitext(weights_path)[0] + f"_{precision}.engine"
+    if os.path.abspath(engine_path) != os.path.abspath(distinct_path):
+        if os.path.exists(distinct_path):
+            os.remove(distinct_path)
+        os.replace(engine_path, distinct_path)
+        engine_path = distinct_path
+
     print(f"Export complete: {engine_path}")
     return engine_path
 
