@@ -60,14 +60,29 @@ def versions():
 
 
 def jetson_state():
+    """All reads are unprivileged: nvpmodel -q (query only) and sysfs."""
     out = ["", "--- Jetson state ---"]
-    out.append(f"nvpmodel: {sh('nvpmodel -q 2>/dev/null || sudo nvpmodel -q')}")
-    out.append(f"jetson_clocks: {sh('jetson_clocks --show 2>/dev/null || sudo jetson_clocks --show')}")
+    out.append(f"nvpmodel: {sh('nvpmodel -q 2>/dev/null')}")
+    out.append("cpu governors/frequencies:")
+    for cpu in sorted(glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq/")):
+        gov = sh(f"cat {cpu}scaling_governor")
+        cur = sh(f"cat {cpu}scaling_cur_freq")
+        mx = sh(f"cat {cpu}scaling_max_freq")
+        out.append(f"  {cpu.split('/')[-3]}: governor={gov} cur={cur} max={mx}")
+    out.append("gpu devfreq:")
+    for df in sorted(glob.glob("/sys/class/devfreq/*/")):
+        gov = sh(f"cat {df}governor")
+        cur = sh(f"cat {df}cur_freq")
+        mx = sh(f"cat {df}max_freq")
+        out.append(f"  {os.path.basename(df.rstrip('/'))}: governor={gov} cur={cur} max={mx}")
     out.append("thermal zones:")
     for tz in sorted(glob.glob("/sys/devices/virtual/thermal/thermal_zone*/")):
         ttype = sh(f"cat {tz}type")
         temp = sh(f"cat {tz}temp")
         out.append(f"  {ttype}: {temp}")
+    out.append("fan pwm:")
+    for fan in sorted(glob.glob("/sys/class/hwmon/hwmon*/pwm1")):
+        out.append(f"  {fan}: {sh(f'cat {fan}')}")
     return out
 
 
