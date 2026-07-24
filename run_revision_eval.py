@@ -96,6 +96,23 @@ def main():
         except ImportError:
             print("ABORT: torch not importable."); sys.exit(2)
 
+    # Guard: the clean-test and calibration data must be materialized first.
+    # Missing yamls cause every INT8 build and every inference to fail late.
+    if not args.dry_run:
+        calib_dir = os.path.join(PROJECT_ROOT, "data", "calib_train", "images")
+        missing = [p for p in (DATA_TEST_CLEAN, DATA_CALIB, calib_dir)
+                   if not os.path.exists(p)]
+        if missing:
+            print("=" * 60)
+            print("ABORT: revision data not prepared. Missing:")
+            for p in missing:
+                print(f"  {p}")
+            print("Run:  python scripts/prepare_revision_data.py")
+            print("(materializes data/test_clean, data/calib_train, and the "
+                  "data_test_clean.yaml / data_calib.yaml configs).")
+            print("=" * 60)
+            sys.exit(2)
+
     experiments = set(args.experiments.split(",")) if args.experiments else EXPERIMENTS
 
     _utils_module.RESULTS_DIR_NAME = RESULTS_DIR_NAME
