@@ -69,7 +69,32 @@ def main():
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--experiments", default=None,
                         help="Comma-separated override of experiment names")
+    parser.add_argument("--allow-cpu", action="store_true",
+                        help="Bypass the CUDA guard (NOT for reported results)")
     args = parser.parse_args()
+
+    # Guard: refuse to run on a device without a working CUDA GPU. This catches
+    # running on the wrong machine or a PyTorch build lacking Jetson GPU support
+    # (which silently falls back to CPU and produces ~0.5 FPS garbage).
+    if not args.dry_run and not args.allow_cpu:
+        try:
+            import torch
+            if not torch.cuda.is_available():
+                import platform
+                print("=" * 60)
+                print("ABORT: CUDA GPU not available -- refusing to run.")
+                print(f"  torch: {torch.__version__}")
+                print(f"  machine: {platform.node()} ({platform.machine()})")
+                print("This device would run inference on CPU. Check that you "
+                      "are on the correct GPU device and that PyTorch has GPU "
+                      "support (on Jetson, the NVIDIA L4T wheel). Re-run with "
+                      "--allow-cpu only for debugging (never for reported "
+                      "numbers).")
+                print("=" * 60)
+                sys.exit(2)
+            print(f"CUDA OK: {torch.cuda.get_device_name(0)} (torch {torch.__version__})")
+        except ImportError:
+            print("ABORT: torch not importable."); sys.exit(2)
 
     experiments = set(args.experiments.split(",")) if args.experiments else EXPERIMENTS
 
