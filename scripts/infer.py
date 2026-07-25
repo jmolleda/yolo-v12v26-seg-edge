@@ -43,15 +43,20 @@ DEFAULT_MEASURE_RUNS = 10
 class TegrastatsReader:
     """Reads total board power from tegrastats in a background thread.
 
-    Parses VIN_SYS_5V0 (total 5V input power) from tegrastats output.
-    Falls back to VDD_GPU_SOC + VDD_CPU_CV if VIN_SYS_5V0 is absent.
+    Parses the total-module input rail from tegrastats output. The rail name
+    differs by board: VIN_SYS_5V0 on the AGX Orin, VDD_IN on the Orin Nano.
+    Falls back to summing subsystem rails (VDD_GPU_SOC + VDD_CPU_CV on AGX,
+    VDD_CPU_GPU_CV + VDD_SOC on Nano) if no total rail is present.
     No sudo or daemon required.
     """
 
     _PATTERN = re.compile(
-        r'VIN_SYS_5V0\s+(\d+)mW'
-        r'|VDD_GPU_SOC\s+(\d+)mW'
-        r'|VDD_CPU_CV\s+(\d+)mW'
+        r'VIN_SYS_5V0\s+(\d+)mW'      # 1: AGX total rail
+        r'|VDD_IN\s+(\d+)mW'          # 2: Orin Nano total rail
+        r'|VDD_GPU_SOC\s+(\d+)mW'     # 3: AGX subsystem
+        r'|VDD_CPU_CV\s+(\d+)mW'      # 4: AGX subsystem
+        r'|VDD_CPU_GPU_CV\s+(\d+)mW'  # 5: Nano subsystem
+        r'|VDD_SOC\s+(\d+)mW'         # 6: Nano subsystem
     )
 
     def __init__(self, interval_ms=500):
@@ -87,18 +92,25 @@ class TegrastatsReader:
             for line in self._proc.stdout:
                 if self._stop.is_set():
                     break
-                vin = gpu_soc = cpu_cv = None
+                total = None       # VIN_SYS_5V0 (AGX) or VDD_IN (Nano)
+                subsys = 0         # sum of subsystem rails, as fallback
                 for m in self._PATTERN.finditer(line):
-                    if m.group(1) is not None:
-                        vin = int(m.group(1))
-                    elif m.group(2) is not None:
-                        gpu_soc = int(m.group(2))
-                    elif m.group(3) is not None:
-                        cpu_cv = int(m.group(3))
-                if vin is not None:
-                    self._samples.append(vin)
-                elif gpu_soc is not None or cpu_cv is not None:
-                    self._samples.append((gpu_soc or 0) + (cpu_cv or 0))
+                    if m.group(1) is not None:      # VIN_SYS_5V0 (AGX total)
+                        total = int(m.group(1))
+                    elif m.group(2) is not None:    # VDD_IN (Nano total)
+                        total = int(m.group(2))
+                    elif m.group(3) is not None:    # VDD_GPU_SOC
+                        subsys += int(m.group(3))
+                    elif m.group(4) is not None:    # VDD_CPU_CV
+                        subsys += int(m.group(4))
+                    elif m.group(5) is not None:    # VDD_CPU_GPU_CV
+                        subsys += int(m.group(5))
+                    elif m.group(6) is not None:    # VDD_SOC
+                        subsys += int(m.group(6))
+                if total is not None:
+                    self._samples.append(total)
+                elif subsys > 0:
+                    self._samples.append(subsys)
         except (FileNotFoundError, OSError):
             pass
 
